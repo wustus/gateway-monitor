@@ -1,0 +1,5 @@
+client:
+  inCluster: false
+  kubeConfigPath: "/etc/gatway-monitor.yaml"
+monitor:
+  schedule: "@every 1m"
