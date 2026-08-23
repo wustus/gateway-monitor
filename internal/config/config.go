@@ -57,7 +57,7 @@ func (c *Config) getConfigFromEnv() error {
 
 func (c *Config) getConfigFromFile() error {
   if _, err := os.Stat(configPath); errors.Is(err, os.ErrNotExist) {
-    slog.Info("no configuration file found", "path", configPath)
+    slog.Debug("no configuration file found", "path", configPath)
     return nil
   }
   data, err := os.ReadFile(configPath)
