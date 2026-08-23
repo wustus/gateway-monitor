@@ -3,6 +3,6 @@
 
 client:
   inCluster: false
-  kubeConfigPath: "/etc/gatway-monitor.yaml"
+  kubeConfigPath: "/Users/wustus/.kube/config"
 monitor:
   schedule: "@every 1m"
