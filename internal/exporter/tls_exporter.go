@@ -21,10 +21,10 @@ func NewTLSExporter() TLSExporter {
       Namespace: "gwm",
       Subsystem: "tls_endpoint",
       Name: "up",
-      Help: "If URL is reachable.",
+      Help: "If host is reachable.",
     },
     []string{
-      "url",
+      "host",
     },
   )
   tlsResponseTimeExporter := prometheus.NewHistogramVec(
@@ -32,11 +32,11 @@ func NewTLSExporter() TLSExporter {
       Namespace: "gwm",
       Subsystem: "tls_endpoint",
       Name: "response_time_millis",
-      Help: "Response time of the URL in milliseconds.",
+      Help: "Response time of the host in milliseconds.",
       Buckets: []float64{10.0, 25.0, 50.0, 75.0, 100.0, 125.0, 150.0, 200.0, 300.0, 400.0, 500.0, 750.0, 1000.0, 1500.0, 2000.0, 3000.0, 4000.0, 5000.0},
     },
     []string{
-      "url",
+      "host",
     },
   )
   tlsStatusCodeExporter := prometheus.NewGaugeVec(
@@ -47,7 +47,7 @@ func NewTLSExporter() TLSExporter {
       Help: "Status code of HTTPS response.",
     },
     []string{
-      "url",
+      "host",
     },
   )
   tlsNotBeforeExporter := prometheus.NewGaugeVec(
@@ -58,7 +58,7 @@ func NewTLSExporter() TLSExporter {
       Help: "Begin of certificate validity.",
     },
     []string{
-      "url",
+      "host",
     },
   )
   tlsNotAfterExporter := prometheus.NewGaugeVec(
@@ -69,7 +69,7 @@ func NewTLSExporter() TLSExporter {
       Help: "End of certificate validity.",
     },
     []string{
-      "url",
+      "host",
     },
   )
   tlsTrustExporter := prometheus.NewGaugeVec(
@@ -80,7 +80,7 @@ func NewTLSExporter() TLSExporter {
       Help: "If certificate chain is trusted.",
     },
     []string{
-      "url",
+      "host",
     },
   )
   prometheus.MustRegister(tlsUpExporter)
@@ -99,19 +99,19 @@ func NewTLSExporter() TLSExporter {
   }
 }
 
-func (e *TLSExporter) Export(url string, probeResult probe.TLSProbeResult){
+func (e *TLSExporter) Export(host string, probeResult probe.TLSProbeResult){
   upValue := 0.0
   if probeResult.IsUp() {
     upValue = 1.0
   }
-  e.upExporter.WithLabelValues(url).Set(upValue)
-  e.responseTimeExporter.WithLabelValues(url).Observe(float64(probeResult.ResponseTime.Milliseconds()))
-  e.statusCodeExporter.WithLabelValues(url).Set(float64(probeResult.StatusCode))
-  e.notBeforeExporter.WithLabelValues(url).Set(float64(probeResult.NotBefore))
-  e.notAfterExporter.WithLabelValues(url).Set(float64(probeResult.NotAfter))
+  e.upExporter.WithLabelValues(host).Set(upValue)
+  e.responseTimeExporter.WithLabelValues(host).Observe(float64(probeResult.ResponseTime.Milliseconds()))
+  e.statusCodeExporter.WithLabelValues(host).Set(float64(probeResult.StatusCode))
+  e.notBeforeExporter.WithLabelValues(host).Set(float64(probeResult.NotBefore))
+  e.notAfterExporter.WithLabelValues(host).Set(float64(probeResult.NotAfter))
   trustValue := 0.0
   if probeResult.Trusted {
     trustValue = 1.0
   }
-  e.trustExporter.WithLabelValues(url).Set(trustValue)
+  e.trustExporter.WithLabelValues(host).Set(trustValue)
 }

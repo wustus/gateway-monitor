@@ -18,10 +18,10 @@ func NewHTTPExporter() HTTPExporter {
       Namespace: "gwm",
       Subsystem: "http_endpoint",
       Name: "up",
-      Help: "If URL is reachable.",
+      Help: "If host is reachable.",
     },
     []string{
-      "url",
+      "host",
     },
   )
   httpResponseTimeExporter := prometheus.NewHistogramVec(
@@ -29,11 +29,11 @@ func NewHTTPExporter() HTTPExporter {
       Namespace: "gwm",
       Subsystem: "http_endpoint",
       Name: "response_time_millis",
-      Help: "Response time of the URL in milliseconds.",
+      Help: "Response time of the host in milliseconds.",
       Buckets: []float64{10.0, 25.0, 50.0, 75.0, 100.0, 125.0, 150.0, 200.0, 300.0, 400.0, 500.0, 750.0, 1000.0, 1500.0, 2000.0, 3000.0, 4000.0, 5000.0},
     },
     []string{
-      "url",
+      "host",
     },
   )
   httpStatusCodeExporter := prometheus.NewGaugeVec(
@@ -44,7 +44,7 @@ func NewHTTPExporter() HTTPExporter {
       Help: "Status code of HTTP response.",
     },
     []string{
-      "url",
+      "host",
     },
   )
   prometheus.MustRegister(httpUpExporter)
@@ -57,12 +57,12 @@ func NewHTTPExporter() HTTPExporter {
   }
 }
 
-func (e *HTTPExporter) Export(url string, probeResult probe.HTTPProbeResult){
+func (e *HTTPExporter) Export(host string, probeResult probe.HTTPProbeResult){
   upValue := 0.0
   if probeResult.IsUp() {
     upValue = 1.0
   }
-  e.upExporter.WithLabelValues(url).Set(upValue)
-  e.responseTimeExporter.WithLabelValues(url).Observe(float64(probeResult.ResponseTime.Milliseconds()))
-  e.statusCodeExporter.WithLabelValues(url).Set(float64(probeResult.StatusCode))
+  e.upExporter.WithLabelValues(host).Set(upValue)
+  e.responseTimeExporter.WithLabelValues(host).Observe(float64(probeResult.ResponseTime.Milliseconds()))
+  e.statusCodeExporter.WithLabelValues(host).Set(float64(probeResult.StatusCode))
 }
