@@ -13,7 +13,7 @@ import (
 
 type HTTPProbeResult struct {
   ProbeResult
-  StatusCode    uint16  // HTTP status code
+  StatusCode    int // HTTP status code
 }
 
 type HTTPProbe struct {
@@ -59,6 +59,6 @@ func (p *HTTPProbe) Probe(ctx context.Context, target string) (Result, error) {
       Up: true,
       ResponseTime: responseTime,
     },
-    StatusCode: uint16(statusCode),
+    StatusCode: statusCode,
   }, nil
 }

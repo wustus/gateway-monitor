@@ -16,10 +16,10 @@ import (
 
 type TLSProbeResult struct {
   ProbeResult
-  StatusCode  uint16  // HTTP status code
-  NotBefore   uint64  // certificate start of validity unix timestamp (seconds)
-  NotAfter    uint64  // certificate expiration unix timestamp (seconds)
-  Trusted     bool    // if the certificate authority is trusted
+  StatusCode  int   // HTTP status code
+  NotBefore   int64 // certificate start of validity unix timestamp (seconds)
+  NotAfter    int64 // certificate expiration unix timestamp (seconds)
+  Trusted     bool  // if the certificate authority is trusted
 }
 
 type TLSProbe struct {
@@ -89,9 +89,9 @@ func (p *TLSProbe) Probe(ctx context.Context, target string) (Result, error) {
       Up: true,
       ResponseTime: responseTime,
     },
-    StatusCode: uint16(statusCode),
-    NotBefore: uint64(cert.NotBefore.Unix()),
-    NotAfter: uint64(cert.NotAfter.Unix()),
+    StatusCode: statusCode,
+    NotBefore: cert.NotBefore.Unix(),
+    NotAfter: cert.NotAfter.Unix(),
     Trusted: verifyErr == nil,
   }, nil
 }
