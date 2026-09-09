@@ -8,10 +8,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/wustus/gateway-monitor/internal/version"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/wustus/gateway-monitor/internal/version"
 )
 
 type TLSProbeResult struct {
@@ -54,7 +55,11 @@ func (p *TLSProbe) Probe(ctx context.Context, target string) (Result, error) {
   }
   req, err := http.NewRequestWithContext(ctx, "GET", target, nil)
   if err != nil {
-    return nil, fmt.Errorf("create request: %w", err)
+    return &TLSProbeResult{
+      ProbeResult: ProbeResult{
+        Error: true,
+      },
+    }, fmt.Errorf("create request: %w", err)
   }
   req.Header.Add("User-Agent", "wustus.blog/gateway-monitor/"+version.Version)
   start := time.Now()
@@ -62,13 +67,11 @@ func (p *TLSProbe) Probe(ctx context.Context, target string) (Result, error) {
   end := time.Now()
   responseTime := end.Sub(start)
   if err != nil {
-    // TODO: different results based on error
     return &TLSProbeResult{
       ProbeResult: ProbeResult{
-        Up: false,
-        ResponseTime: responseTime,
+        Error: true,
       },
-    }, fmt.Errorf("request target: %w", err)
+    }, fmt.Errorf("request target %s: %w", target, err)
   }
   defer res.Body.Close()
   if res.TLS == nil || len(res.TLS.PeerCertificates) == 0 {

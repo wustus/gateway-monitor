@@ -20,6 +20,7 @@ type Prober interface {
 type ProbeResult struct {
   Up            bool          // if target is reachable
   ResponseTime  time.Duration // request response time
+  Error         bool          // indicates if an error occured
 }
 
 func (r *ProbeResult) IsUp() bool {

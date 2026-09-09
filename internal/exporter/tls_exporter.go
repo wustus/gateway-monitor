@@ -16,6 +16,7 @@ type TLSExporter struct {
   notBeforeExporter     prometheus.GaugeVec
   notAfterExporter      prometheus.GaugeVec
   trustExporter         prometheus.GaugeVec
+  errorExporter         prometheus.GaugeVec
 }
 
 func NewTLSExporter() TLSExporter {
@@ -86,12 +87,24 @@ func NewTLSExporter() TLSExporter {
       "host",
     },
   )
+  tlsErrorExporter := prometheus.NewGaugeVec(
+    prometheus.GaugeOpts{
+      Namespace: "gwm",
+      Subsystem: "tls_endpoint",
+      Name: "error",
+      Help: "If an error occured during the request.",
+    },
+    []string{
+      "host",
+    },
+  )
   prometheus.MustRegister(tlsUpExporter)
   prometheus.MustRegister(tlsResponseTimeExporter)
   prometheus.MustRegister(tlsStatusCodeExporter)
   prometheus.MustRegister(tlsNotBeforeExporter)
   prometheus.MustRegister(tlsNotAfterExporter)
   prometheus.MustRegister(tlsTrustExporter)
+  prometheus.MustRegister(tlsErrorExporter)
   return TLSExporter{
     upExporter: *tlsUpExporter,
     statusCodeExporter: *tlsStatusCodeExporter,
@@ -99,10 +112,14 @@ func NewTLSExporter() TLSExporter {
     notBeforeExporter: *tlsNotBeforeExporter,
     notAfterExporter: *tlsNotAfterExporter,
     trustExporter: *tlsTrustExporter,
+    errorExporter: *tlsErrorExporter,
   }
 }
 
 func (e *TLSExporter) Export(host string, probeResult probe.TLSProbeResult){
+  if probeResult.Error {
+    e.errorExporter.WithLabelValues(host).Set(1.0)
+  }
   upValue := 0.0
   if probeResult.IsUp() {
     upValue = 1.0
@@ -117,4 +134,5 @@ func (e *TLSExporter) Export(host string, probeResult probe.TLSProbeResult){
     trustValue = 1.0
   }
   e.trustExporter.WithLabelValues(host).Set(trustValue)
+  e.errorExporter.WithLabelValues(host).Set(0.0)
 }

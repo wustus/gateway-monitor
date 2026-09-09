@@ -6,9 +6,10 @@ package probe
 import (
 	"context"
 	"fmt"
-	"github.com/wustus/gateway-monitor/internal/version"
 	"net/http"
 	"time"
+
+	"github.com/wustus/gateway-monitor/internal/version"
 )
 
 type HTTPProbeResult struct {
@@ -36,7 +37,11 @@ func (p *HTTPProbe) Probe(ctx context.Context, target string) (Result, error) {
   client := p.client
   req, err := http.NewRequestWithContext(ctx, "GET", target, nil)
   if err != nil {
-    return nil, fmt.Errorf("create request: %w", err)
+    return &HTTPProbeResult{
+      ProbeResult: ProbeResult{
+        Error: true,
+      },
+    }, fmt.Errorf("create request: %w", err)
   }
   req.Header.Add("User-Agent", "wustus.blog/gateway-monitor/"+version.Version)
   start := time.Now()
@@ -44,13 +49,11 @@ func (p *HTTPProbe) Probe(ctx context.Context, target string) (Result, error) {
   end := time.Now()
   responseTime := end.Sub(start)
   if err != nil {
-    // TODO: different results based on error
     return &HTTPProbeResult{
       ProbeResult: ProbeResult{
-        Up: false,
-        ResponseTime: responseTime,
+        Error: true,
       },
-    }, fmt.Errorf("request target: %w", err)
+    }, fmt.Errorf("request target %s: %w", target, err)
   }
   defer res.Body.Close()
   statusCode := res.StatusCode

@@ -13,6 +13,7 @@ type HTTPExporter struct {
   upExporter            prometheus.GaugeVec
   responseTimeExporter  prometheus.HistogramVec
   statusCodeExporter    prometheus.GaugeVec
+  errorExporter         prometheus.GaugeVec
 }
 
 func NewHTTPExporter() HTTPExporter {
@@ -50,17 +51,35 @@ func NewHTTPExporter() HTTPExporter {
       "host",
     },
   )
+  httpErrorExporter := prometheus.NewGaugeVec(
+    prometheus.GaugeOpts{
+      Namespace: "gwm",
+      Subsystem: "http_endpoint",
+      Name: "error",
+      Help: "If an error occured during the request.",
+    },
+    []string{
+      "host",
+    },
+  )
   prometheus.MustRegister(httpUpExporter)
   prometheus.MustRegister(httpResponseTimeExporter)
   prometheus.MustRegister(httpStatusCodeExporter)
+  prometheus.MustRegister(httpErrorExporter)
   return HTTPExporter{
     upExporter: *httpUpExporter,
     statusCodeExporter: *httpStatusCodeExporter,
     responseTimeExporter: *httpResponseTimeExporter,
+    errorExporter: *httpErrorExporter,
   }
 }
 
-func (e *HTTPExporter) Export(host string, probeResult probe.HTTPProbeResult){
+func (e *HTTPExporter) Export(host string, probeResult probe.HTTPProbeResult) {
+  // we don't make any assumptions about probe result, just export the error and skip everything else
+  if probeResult.Error {
+    e.errorExporter.WithLabelValues(host).Set(1.0)
+    return
+  }
   upValue := 0.0
   if probeResult.IsUp() {
     upValue = 1.0
@@ -68,4 +87,5 @@ func (e *HTTPExporter) Export(host string, probeResult probe.HTTPProbeResult){
   e.upExporter.WithLabelValues(host).Set(upValue)
   e.responseTimeExporter.WithLabelValues(host).Observe(float64(probeResult.ResponseTime.Milliseconds()))
   e.statusCodeExporter.WithLabelValues(host).Set(float64(probeResult.StatusCode))
+  e.errorExporter.WithLabelValues(host).Set(0.0)
 }
