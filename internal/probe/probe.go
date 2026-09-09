@@ -11,6 +11,7 @@ import (
 type Result interface {
   IsUp()      bool
   Duration()  time.Duration
+  IsError()   bool
 }
 
 type Prober interface {
@@ -29,4 +30,8 @@ func (r *ProbeResult) IsUp() bool {
 
 func (r *ProbeResult) Duration() time.Duration {
   return r.ResponseTime
+}
+
+func (r *ProbeResult) IsError() bool {
+  return r.Error
 }

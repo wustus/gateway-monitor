@@ -33,6 +33,10 @@ func (r *HTTPProbeResult) Duration() time.Duration {
   return r.ResponseTime
 }
 
+func (r *HTTPProbeResult) IsError() bool {
+  return r.Error
+}
+
 func (p *HTTPProbe) Probe(ctx context.Context, target string) (Result, error) {
   client := p.client
   req, err := http.NewRequestWithContext(ctx, "GET", target, nil)
