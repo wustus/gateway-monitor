@@ -42,6 +42,9 @@ func (k *KubeClient) CheckPermissions(ctx context.Context) error {
   if err := k.doSSAR(ctx, "", "list", "gateway.networking.k8s.io", "v1", "httproutes", ""); err != nil {
     return fmt.Errorf("check permissions: %v", err)
   }
+  if err := k.doSSAR(ctx, "", "list", "gateway.networking.k8s.io", "v1", "tlsroutes", ""); err != nil {
+    return fmt.Errorf("check permissions: %v", err)
+  }
   slog.Info("permissions okay")
   return nil
 }
