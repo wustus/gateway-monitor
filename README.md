@@ -9,8 +9,8 @@ Currently supported resources:
 ## How it Works
 
 In a specified interval (cron), the `HTTPRoute` and `TLSRoute` manifests of the Kubernetes cluster are listed and their hostnames extracted. Each `hostname` is then iterated over and requested.
-- `HTTPRoute` endpoints are requested using `HTTP`: `http://<hostname>`.
-- `TLSRoute` endpoints are requested using `HTTPS`: `https://<hostname>`.
+- `HTTPRoute` endpoints are requested using `HTTP`: `http://<hostname>`
+- `TLSRoute` endpoints are requested using `HTTPS`: `https://<hostname>`
 
 ### Current Design Decisions
 
@@ -51,7 +51,7 @@ By default, the (optional) configuration file is expected at `/etc/gateway-monit
 ```yaml
 client:
   inCluster: false
-  kubeConfigPath: "/etc/gatway-monitor.yaml"
+  kubeConfigPath: "/Users/notwustus/.kube/config"
 monitor:
   schedule: "@every 1m"
 ```
