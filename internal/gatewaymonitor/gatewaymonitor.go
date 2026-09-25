@@ -49,7 +49,9 @@ func (gwm *GatewayMonitor) run(ctx context.Context) error {
     if err != nil {
       slog.Error("httpProbe", "msg", err)
     }
-    gwm.exporter.Export(host, res)
+    if res != nil {
+      gwm.exporter.Export(host, res)
+    }
   }
   tlsHostnames, err := gwm.client.GetTLSRouteHostnames(ctx)
   if err != nil {
@@ -64,7 +66,9 @@ func (gwm *GatewayMonitor) run(ctx context.Context) error {
     if err != nil {
       slog.Error("tlsProbe", "msg", err)
     }
-    gwm.exporter.Export(host, res)
+    if res != nil {
+      gwm.exporter.Export(host, res)
+    }
   }
   return nil
 }
