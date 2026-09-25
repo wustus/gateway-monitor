@@ -84,7 +84,7 @@ func TestHTTPProbeExpiredCertificate(t *testing.T) {
     ))
   server.TLS = &tls.Config{
     Certificates: []tls.Certificate{
-      ExpiredCertificate(t),
+      expiredCertificate(t),
     },
   }
   server.StartTLS()

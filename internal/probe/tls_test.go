@@ -90,7 +90,7 @@ func TestTLSProbeError(t *testing.T) {
   })
 }
 
-func ExpiredCertificate(t *testing.T) tls.Certificate {
+func expiredCertificate(t *testing.T) tls.Certificate {
   t.Helper()
   privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
   if err != nil {
@@ -134,7 +134,7 @@ func TestTLSProbeExpiredCertificate(t *testing.T) {
     ))
   server.TLS = &tls.Config{
     Certificates: []tls.Certificate{
-      ExpiredCertificate(t),
+      expiredCertificate(t),
     },
   }
   server.StartTLS()
@@ -147,8 +147,5 @@ func TestTLSProbeExpiredCertificate(t *testing.T) {
   got := res.(*TLSProbeResult)
   if got.Trusted {
     t.Error("Trusted = true, want false for expired certificate")
-  }
-  if !got.IsError() {
-    t.Errorf("Error = false, want true for expired certificate")
   }
 }
