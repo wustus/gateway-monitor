@@ -29,12 +29,6 @@ var inClusterDefault bool = false
 var scheduleDefault string = "@every 30s"
 var kubeConfigPathDefault string = ""
 
-func init() {
-  if home := homedir.HomeDir(); home != "" {
-    kubeConfigPathDefault = filepath.Join(home, ".kube", "config")
-  }
-}
-
 func (c *Config) getConfigFromEnv() error {
   if configPathEnv := os.Getenv("GWM_CONFIG_PATH"); configPathEnv != "" {
     configPath = configPathEnv
@@ -129,8 +123,11 @@ func (c *Config) validate() error {
   return nil
 }
 
-func New(args []string) (*Config, error) {
-  conf := Config{
+func getDefaultConfig() *Config {
+  if home := homedir.HomeDir(); home != "" {
+    kubeConfigPathDefault = filepath.Join(home, ".kube", "config")
+  }
+  return &Config{
     Client: &kubeclient.Config{
       InCluster: inClusterDefault,
       KubeConfigPath: kubeConfigPathDefault,
@@ -139,6 +136,10 @@ func New(args []string) (*Config, error) {
       Schedule: scheduleDefault,
     },
   }
+}
+
+func load(args []string) (*Config, error) {
+  conf := getDefaultConfig()
   err := conf.getConfigFromEnv()
   if err != nil {
     return nil, fmt.Errorf("load environment configuration: %w", err)
@@ -154,8 +155,16 @@ func New(args []string) (*Config, error) {
   if err != nil {
     return nil, fmt.Errorf("args: %w", err)
   }
+  return conf, err
+}
+
+func New(args []string) (*Config, error) {
+  conf, err := load(args)
+  if err != nil {
+    return nil, err
+  }
   if err = conf.validate(); err != nil {
     return nil, fmt.Errorf("config validation error: %w", err)
   }
-  return &conf, nil
+  return conf, nil
 }
