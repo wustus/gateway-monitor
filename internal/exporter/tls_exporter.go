@@ -119,6 +119,7 @@ func NewTLSExporter() TLSExporter {
 func (e *TLSExporter) Export(host string, probeResult probe.TLSProbeResult){
   if probeResult.Error {
     e.errorExporter.WithLabelValues(host).Set(1.0)
+    return
   }
   upValue := 0.0
   if probeResult.IsUp() {

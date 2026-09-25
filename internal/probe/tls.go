@@ -91,7 +91,7 @@ func (p *TLSProbe) Probe(ctx context.Context, target string) (Result, error) {
     ProbeResult: ProbeResult{
       Up: true,
       ResponseTime: responseTime,
-      Error: verifyErr != nil,
+      Error: false,
     },
     StatusCode: statusCode,
     NotBefore: cert.NotBefore.Unix(),
