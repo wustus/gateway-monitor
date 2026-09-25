@@ -18,7 +18,7 @@ In a specified interval (cron), the `HTTPRoute` and `TLSRoute` manifests of the 
 - Requests are always made against the root path: `/`
   * This may change in the future to probe different backends defined in the `*Route` manifests
   * Additionally, a Kubernetes _liveness endpoint_ may be requested instead of the root path
-- A `404 Not Found` response is considered as the endpoint being up
+- All status codes `< 500` are considered as the endpoint being up
 
 ## Configuration
 
