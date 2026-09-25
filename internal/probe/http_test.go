@@ -1,4 +1,4 @@
-package probe_test
+package probe
 
 import (
 	"context"
@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/wustus/gateway-monitor/internal/probe"
 )
 
 func TestHTTPProbe(t *testing.T) {
@@ -40,12 +38,12 @@ func TestHTTPProbe(t *testing.T) {
         },
       ))
       defer server.Close()
-      p := probe.NewHTTPProbe()
+      p := NewHTTPProbe()
       res, err := p.Probe(context.TODO(), server.URL)
       if err != nil {
         t.Fatalf("Probe() error: %v", err)
       }
-      got := res.(*probe.HTTPProbeResult)
+      got := res.(*HTTPProbeResult)
       if got.IsUp() != test.wantUp {
         t.Errorf("IsUp() = %v, want %v", got.IsUp(), test.wantUp)
       }
@@ -64,7 +62,7 @@ func TestHTTPProbeError(t *testing.T) {
       },
     ))
     server.Close()
-    p := probe.NewHTTPProbe()
+    p := NewHTTPProbe()
     res, err := p.Probe(context.TODO(), server.URL)
     if err == nil {
       t.Fatal("expected Probe() to error")
@@ -88,12 +86,12 @@ func TestHTTPProbeExpiredCertificate(t *testing.T) {
   }
   server.StartTLS()
   defer server.Close()
-  p := probe.NewHTTPProbe()
+  p := NewHTTPProbe()
   res, err := p.Probe(context.TODO(), server.URL)
   if err == nil {
     t.Fatal("Probe() error = nil, expecting TLS error")
   }
-  got := res.(*probe.HTTPProbeResult)
+  got := res.(*HTTPProbeResult)
   if !got.IsError() {
     t.Errorf("Error = false, want true for invalid certificate")
   }
