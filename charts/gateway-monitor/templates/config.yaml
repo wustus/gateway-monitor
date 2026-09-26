@@ -1,0 +1,11 @@
+{{- with .Values.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "gateway-monitor.fullname" $ }}-config
+  labels:
+    {{- include "gateway-monitor.labels" $ | nindent 4 }}
+data:
+  gateway-monitor.yaml: |-
+    {{- toYaml . | nindent 4 }}
+{{- end }}
