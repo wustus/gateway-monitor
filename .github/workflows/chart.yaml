@@ -1,0 +1,43 @@
+name: Helm Chart
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "chart-v*"
+
+env:
+  CHART_PATH: charts/gateway-monitor
+
+jobs:
+  release:
+    name: Release Helm Chart
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Helm
+        uses: actions/setup-helm@v5
+
+      - name: Lint
+        run: helm lint "${CHART_PATH}"
+
+      - name: Package
+        run: helm package "${CHART_PATH}" --destination dist
+
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login "ghcr.io" \
+              --username "${{ github.actor }}" \
+              --password-stdin
+
+      - name: Push
+        run: |
+          helm push dist/*.tgz \
+            "oci://ghcr.io/${{ github.repository_owner }}/charts"
