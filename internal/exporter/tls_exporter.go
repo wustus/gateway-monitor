@@ -4,6 +4,8 @@
 package exporter
 
 import (
+	"time"
+
 	"github.com/wustus/gateway-monitor/internal/probe"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -37,7 +39,7 @@ func NewTLSExporter() TLSExporter {
       Subsystem: "tls_endpoint",
       Name: "response_time_millis",
       Help: "Response time of the host in milliseconds.",
-      Buckets: []float64{10.0, 25.0, 50.0, 75.0, 100.0, 125.0, 150.0, 200.0, 300.0, 400.0, 500.0, 750.0, 1000.0, 1500.0, 2000.0, 3000.0, 4000.0, 5000.0},
+      Buckets: []float64{0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 25.0, 50.0, 75.0, 100.0, 125.0, 150.0, 200.0, 300.0, 400.0, 500.0, 750.0, 1000.0, 1500.0, 2000.0, 3000.0, 4000.0, 5000.0},
     },
     []string{
       "host",
@@ -126,7 +128,7 @@ func (e *TLSExporter) Export(host string, probeResult probe.TLSProbeResult){
     upValue = 1.0
   }
   e.upExporter.WithLabelValues(host).Set(upValue)
-  e.responseTimeExporter.WithLabelValues(host).Observe(float64(probeResult.ResponseTime.Milliseconds()))
+  e.responseTimeExporter.WithLabelValues(host).Observe(float64(probeResult.ResponseTime) / float64(time.Millisecond))
   e.statusCodeExporter.WithLabelValues(host).Set(float64(probeResult.StatusCode))
   e.notBeforeExporter.WithLabelValues(host).Set(float64(probeResult.NotBefore))
   e.notAfterExporter.WithLabelValues(host).Set(float64(probeResult.NotAfter))
