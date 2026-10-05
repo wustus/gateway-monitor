@@ -14,7 +14,6 @@ import (
 type TLSExporter struct {
   upExporter            prometheus.GaugeVec
   responseTimeExporter  prometheus.HistogramVec
-  statusCodeExporter    prometheus.GaugeVec
   notBeforeExporter     prometheus.GaugeVec
   notAfterExporter      prometheus.GaugeVec
   trustExporter         prometheus.GaugeVec
@@ -27,10 +26,10 @@ func NewTLSExporter() TLSExporter {
       Namespace: "gwm",
       Subsystem: "tls_endpoint",
       Name: "up",
-      Help: "If host is reachable.",
+      Help: "If hostname is reachable.",
     },
     []string{
-      "host",
+      "hostname",
     },
   )
   tlsResponseTimeExporter := prometheus.NewHistogramVec(
@@ -38,22 +37,11 @@ func NewTLSExporter() TLSExporter {
       Namespace: "gwm",
       Subsystem: "tls_endpoint",
       Name: "response_time_millis",
-      Help: "Response time of the host in milliseconds.",
+      Help: "Response time of the hostname in milliseconds.",
       Buckets: []float64{0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 25.0, 50.0, 75.0, 100.0, 125.0, 150.0, 200.0, 300.0, 400.0, 500.0, 750.0, 1000.0, 1500.0, 2000.0, 3000.0, 4000.0, 5000.0},
     },
     []string{
-      "host",
-    },
-  )
-  tlsStatusCodeExporter := prometheus.NewGaugeVec(
-    prometheus.GaugeOpts{
-      Namespace: "gwm",
-      Subsystem: "tls_endpoint",
-      Name: "status_code",
-      Help: "Status code of HTTPS response.",
-    },
-    []string{
-      "host",
+      "hostname",
     },
   )
   tlsNotBeforeExporter := prometheus.NewGaugeVec(
@@ -64,7 +52,7 @@ func NewTLSExporter() TLSExporter {
       Help: "Begin of certificate validity.",
     },
     []string{
-      "host",
+      "hostname",
     },
   )
   tlsNotAfterExporter := prometheus.NewGaugeVec(
@@ -75,7 +63,7 @@ func NewTLSExporter() TLSExporter {
       Help: "End of certificate validity.",
     },
     []string{
-      "host",
+      "hostname",
     },
   )
   tlsTrustExporter := prometheus.NewGaugeVec(
@@ -86,7 +74,7 @@ func NewTLSExporter() TLSExporter {
       Help: "If certificate chain is trusted.",
     },
     []string{
-      "host",
+      "hostname",
     },
   )
   tlsErrorExporter := prometheus.NewGaugeVec(
@@ -97,19 +85,17 @@ func NewTLSExporter() TLSExporter {
       Help: "If an error occured during the request.",
     },
     []string{
-      "host",
+      "hostname",
     },
   )
   prometheus.MustRegister(tlsUpExporter)
   prometheus.MustRegister(tlsResponseTimeExporter)
-  prometheus.MustRegister(tlsStatusCodeExporter)
   prometheus.MustRegister(tlsNotBeforeExporter)
   prometheus.MustRegister(tlsNotAfterExporter)
   prometheus.MustRegister(tlsTrustExporter)
   prometheus.MustRegister(tlsErrorExporter)
   return TLSExporter{
     upExporter: *tlsUpExporter,
-    statusCodeExporter: *tlsStatusCodeExporter,
     responseTimeExporter: *tlsResponseTimeExporter,
     notBeforeExporter: *tlsNotBeforeExporter,
     notAfterExporter: *tlsNotAfterExporter,
@@ -118,24 +104,23 @@ func NewTLSExporter() TLSExporter {
   }
 }
 
-func (e *TLSExporter) Export(host string, probeResult probe.TLSProbeResult){
+func (e *TLSExporter) Export(hostname string, probeResult probe.TLSProbeResult){
   if probeResult.Error {
-    e.errorExporter.WithLabelValues(host).Set(1.0)
+    e.errorExporter.WithLabelValues(hostname).Set(1.0)
     return
   }
   upValue := 0.0
   if probeResult.IsUp() {
     upValue = 1.0
   }
-  e.upExporter.WithLabelValues(host).Set(upValue)
-  e.responseTimeExporter.WithLabelValues(host).Observe(float64(probeResult.ResponseTime) / float64(time.Millisecond))
-  e.statusCodeExporter.WithLabelValues(host).Set(float64(probeResult.StatusCode))
-  e.notBeforeExporter.WithLabelValues(host).Set(float64(probeResult.NotBefore))
-  e.notAfterExporter.WithLabelValues(host).Set(float64(probeResult.NotAfter))
+  e.upExporter.WithLabelValues(hostname).Set(upValue)
+  e.responseTimeExporter.WithLabelValues(hostname).Observe(float64(probeResult.ResponseTime) / float64(time.Millisecond))
+  e.notBeforeExporter.WithLabelValues(hostname).Set(float64(probeResult.NotBefore))
+  e.notAfterExporter.WithLabelValues(hostname).Set(float64(probeResult.NotAfter))
   trustValue := 0.0
   if probeResult.Trusted {
     trustValue = 1.0
   }
-  e.trustExporter.WithLabelValues(host).Set(trustValue)
-  e.errorExporter.WithLabelValues(host).Set(0.0)
+  e.trustExporter.WithLabelValues(hostname).Set(trustValue)
+  e.errorExporter.WithLabelValues(hostname).Set(0.0)
 }
