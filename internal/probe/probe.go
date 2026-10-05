@@ -15,7 +15,7 @@ type Result interface {
 }
 
 type Prober interface {
-  Probe(ctx context.Context, target string) (*Result, error)
+  Probe(ctx context.Context, target any) (*Result, error)
 }
 
 type ProbeResult struct {

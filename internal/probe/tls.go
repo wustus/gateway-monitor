@@ -8,11 +8,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"net/http"
-	"net/url"
+	"net"
 	"time"
 
-	"github.com/wustus/gateway-monitor/internal/version"
+	"github.com/wustus/gateway-monitor/internal/kubeclient"
 )
 
 type TLSProbeResult struct {
@@ -23,20 +22,10 @@ type TLSProbeResult struct {
   Trusted     bool  // if the certificate authority is trusted
 }
 
-type TLSProbe struct {
-  client  http.Client
-}
+type TLSProbe struct { }
 
 func NewTLSProbe() TLSProbe {
-  return TLSProbe{
-    client: http.Client{
-      Transport: &http.Transport{
-        TLSClientConfig: &tls.Config{
-          InsecureSkipVerify: true, // CA might not be trusted and cause a failed request
-        },
-      },
-    },
-  }
+  return TLSProbe{}
 }
 
 func (r *TLSProbeResult) IsUp() bool {
@@ -47,44 +36,40 @@ func (r *TLSProbeResult) Duration() time.Duration {
   return r.ResponseTime
 }
 
-func (p *TLSProbe) Probe(ctx context.Context, target string) (Result, error) {
-  client := p.client
-  u, err := url.Parse(target)
-  if err != nil {
-    return nil, fmt.Errorf("parsing URL: %w", err)
-  }
-  req, err := http.NewRequestWithContext(ctx, "GET", target, nil)
-  if err != nil {
-    return &TLSProbeResult{
-      ProbeResult: ProbeResult{
-        Error: true,
-      },
-    }, fmt.Errorf("create request: %w", err)
-  }
-  req.Header.Add("User-Agent", "wustus.blog/gateway-monitor/"+version.Version)
+func (p *TLSProbe) Probe(ctx context.Context, target kubeclient.TLSRouteEndpoint) (Result, error) {
   start := time.Now()
-  res, err := client.Do(req)
-  end := time.Now()
-  responseTime := end.Sub(start)
+  conn, err := tls.DialWithDialer(
+    &net.Dialer{},
+    "tcp",
+    fmt.Sprintf("%s:%d", target.Hostname, target.Port),
+    &tls.Config{
+      ServerName: target.Hostname,
+      // we verify and export trust ourselves
+      InsecureSkipVerify: true,
+    },
+  )
   if err != nil {
     return &TLSProbeResult{
       ProbeResult: ProbeResult{
         Error: true,
       },
-    }, fmt.Errorf("request target %s: %w", target, err)
+    }, fmt.Errorf("dial host %s:%d: %w", target.Hostname, target.Port, err)
   }
-  defer res.Body.Close()
-  if res.TLS == nil || len(res.TLS.PeerCertificates) == 0 {
+  conn.Handshake()
+  end := time.Now()
+  defer conn.Close()
+  responseTime := end.Sub(start)
+  connState := conn.ConnectionState()
+  if len(connState.PeerCertificates) == 0 {
     return nil, fmt.Errorf("no TLS certificate")
   }
-  statusCode := res.StatusCode
-  cert := res.TLS.PeerCertificates[0]
+  cert := connState.PeerCertificates[0]
   intermediates := x509.NewCertPool()
-  for _, intermediate := range res.TLS.PeerCertificates[1:] {
+  for _, intermediate := range connState.PeerCertificates[1:] {
     intermediates.AddCert(intermediate)
   }
   _, verifyErr := cert.Verify(x509.VerifyOptions{
-    DNSName: u.Hostname(),
+    DNSName: target.Hostname,
     Intermediates: intermediates,
   })
   return &TLSProbeResult{
@@ -93,7 +78,6 @@ func (p *TLSProbe) Probe(ctx context.Context, target string) (Result, error) {
       ResponseTime: responseTime,
       Error: false,
     },
-    StatusCode: statusCode,
     NotBefore: cert.NotBefore.Unix(),
     NotAfter: cert.NotAfter.Unix(),
     Trusted: verifyErr == nil,

@@ -53,21 +53,21 @@ func (gwm *GatewayMonitor) run(ctx context.Context) error {
       gwm.exporter.Export(host, res)
     }
   }
-  tlsHostnames, err := gwm.client.GetTLSRouteHostnames(ctx)
+  tlsEndpoints, err := gwm.client.GetTLSRouteEndpoints(ctx)
   if err != nil {
-    return fmt.Errorf("getting TLSRoute hostnames: %w", err)
+    return fmt.Errorf("getting TLSRoute endpoints: %w", err)
   }
   tlsProbe := probe.NewTLSProbe()
-  for _, host := range tlsHostnames {
-    if util.IsWildcardDomain(host) {
-      host = util.ReplaceWildcardDomain(host, "gwm")
+  for _, ep := range tlsEndpoints {
+    if util.IsWildcardDomain(ep.Hostname) {
+      ep.Hostname = util.ReplaceWildcardDomain(ep.Hostname, "gwm")
     }
-    res, err := tlsProbe.Probe(ctx, fmt.Sprintf("https://%s", host))
+    res, err := tlsProbe.Probe(ctx, ep)
     if err != nil {
       slog.Error("tlsProbe", "msg", err)
     }
     if res != nil {
-      gwm.exporter.Export(host, res)
+      gwm.exporter.Export(ep.Hostname, res)
     }
   }
   return nil
