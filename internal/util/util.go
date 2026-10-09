@@ -62,10 +62,10 @@ func GetHostnameIntersection(listenerHostname, routeHostname *string) (string, b
   ls := lh[1:]
   rs := rh[1:]
   if strings.HasSuffix(ls, rs) {
-    return ls, true
+    return lh, true
   }
   if strings.HasSuffix(rs, ls) {
-    return rs, true
+    return rh, true
   }
   return "", false
 }
