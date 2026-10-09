@@ -17,11 +17,11 @@ func New() Exporter {
   }
 }
 
-func (e *Exporter) Export(url string, probeResult probe.Result) {
+func (e *Exporter) Export(target probe.ProbeTarget, probeResult probe.Result) {
   switch res := probeResult.(type) {
   case *probe.HTTPProbeResult:
-    e.http.Export(url, *res)
+    e.http.Export(target, *res)
   case *probe.TLSProbeResult:
-    e.tls.Export(url, *res)
+    e.tls.Export(target, *res)
   }
 }

@@ -10,13 +10,10 @@ import (
 	"fmt"
 	"net"
 	"time"
-
-	"github.com/wustus/gateway-monitor/internal/kubeclient"
 )
 
 type TLSProbeResult struct {
   ProbeResult
-  StatusCode  int   // HTTP status code
   NotBefore   int64 // certificate start of validity unix timestamp (seconds)
   NotAfter    int64 // certificate expiration unix timestamp (seconds)
   Trusted     bool  // if the certificate authority is trusted
@@ -29,14 +26,14 @@ func NewTLSProbe() TLSProbe {
 }
 
 func (r *TLSProbeResult) IsUp() bool {
-  return r.Up && r.StatusCode < 500
+  return r.Up
 }
 
 func (r *TLSProbeResult) Duration() time.Duration {
   return r.ResponseTime
 }
 
-func (p *TLSProbe) Probe(ctx context.Context, target kubeclient.TLSRouteEndpoint) (Result, error) {
+func (p *TLSProbe) Probe(ctx context.Context, target ProbeTarget) (Result, error) {
   start := time.Now()
   conn, err := tls.DialWithDialer(
     &net.Dialer{},

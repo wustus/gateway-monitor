@@ -6,11 +6,12 @@ package gatewaymonitor
 import (
 	"context"
 	"fmt"
+	"log/slog"
+
 	"github.com/wustus/gateway-monitor/internal/exporter"
 	"github.com/wustus/gateway-monitor/internal/kubeclient"
 	"github.com/wustus/gateway-monitor/internal/probe"
 	"github.com/wustus/gateway-monitor/internal/util"
-	"log/slog"
 
 	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
@@ -36,21 +37,23 @@ func New(conf Config, client *kubeclient.KubeClient) *GatewayMonitor {
 }
 
 func (gwm *GatewayMonitor) run(ctx context.Context) error {
-  httpHostnames, err := gwm.client.GetHTTPRouteHostnames(ctx)
+  httpEndpoints, err := gwm.client.GetHTTPRouteEndpoints(ctx)
   if err != nil {
-    return fmt.Errorf("getting HTTPRoute hostnames: %w", err)
+    return fmt.Errorf("getting HTTPRoute endpoints: %w", err)
   }
   httpProbe := probe.NewHTTPProbe()
-  for _, host := range httpHostnames {
-    if util.IsWildcardDomain(host) {
-      host = util.ReplaceWildcardDomain(host, "gwm")
+  for _, ep := range httpEndpoints {
+    hostname := ep.Hostname
+    if util.IsWildcardDomain(hostname) {
+      hostname = util.ReplaceWildcardDomain(hostname, "gwm")
     }
-    res, err := httpProbe.Probe(ctx, fmt.Sprintf("http://%s", host))
+    target := probe.ProbeTarget{Protocol: ep.Protocol, Hostname: hostname, Port: ep.Port}
+    res, err := httpProbe.Probe(ctx, target)
     if err != nil {
       slog.Error("httpProbe", "msg", err)
     }
     if res != nil {
-      gwm.exporter.Export(host, res)
+      gwm.exporter.Export(target, res)
     }
   }
   tlsEndpoints, err := gwm.client.GetTLSRouteEndpoints(ctx)
@@ -59,15 +62,17 @@ func (gwm *GatewayMonitor) run(ctx context.Context) error {
   }
   tlsProbe := probe.NewTLSProbe()
   for _, ep := range tlsEndpoints {
-    if util.IsWildcardDomain(ep.Hostname) {
-      ep.Hostname = util.ReplaceWildcardDomain(ep.Hostname, "gwm")
+    hostname := ep.Hostname
+    if util.IsWildcardDomain(hostname) {
+      ep.Hostname = util.ReplaceWildcardDomain(hostname, "gwm")
     }
-    res, err := tlsProbe.Probe(ctx, ep)
+    target := probe.ProbeTarget{Protocol: ep.Protocol, Hostname: hostname, Port: ep.Port}
+    res, err := tlsProbe.Probe(ctx, target)
     if err != nil {
       slog.Error("tlsProbe", "msg", err)
     }
     if res != nil {
-      gwm.exporter.Export(ep.Hostname, res)
+      gwm.exporter.Export(target, res)
     }
   }
   return nil

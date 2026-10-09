@@ -15,7 +15,13 @@ type Result interface {
 }
 
 type Prober interface {
-  Probe(ctx context.Context, target any) (*Result, error)
+  Probe(ctx context.Context, target ProbeTarget) (*Result, error)
+}
+
+type ProbeTarget struct {
+  Protocol    string
+  Hostname    string
+  Port        int
 }
 
 type ProbeResult struct {

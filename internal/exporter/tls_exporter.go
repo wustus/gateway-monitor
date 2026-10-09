@@ -104,7 +104,8 @@ func NewTLSExporter() TLSExporter {
   }
 }
 
-func (e *TLSExporter) Export(hostname string, probeResult probe.TLSProbeResult){
+func (e *TLSExporter) Export(target probe.ProbeTarget, probeResult probe.TLSProbeResult){
+  hostname := target.Hostname
   if probeResult.Error {
     e.errorExporter.WithLabelValues(hostname).Set(1.0)
     return
