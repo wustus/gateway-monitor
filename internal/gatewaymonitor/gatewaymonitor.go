@@ -20,8 +20,8 @@ import (
 
 
 type Config struct {
-  Schedule        string        `yaml:"schedule"`
-  Timeout         time.Duration `yaml:"timeout"`
+  Schedule          string        `yaml:"schedule"`
+  Timeout           time.Duration `yaml:"timeout"`
 }
 
 type GatewayMonitor struct {

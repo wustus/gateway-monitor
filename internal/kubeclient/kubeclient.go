@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 
 	"github.com/wustus/gateway-monitor/internal/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,13 +21,16 @@ import (
 )
 
 type KubeClient struct {
+  config      *Config
   kubernetes  *kubernetes.Clientset
   gateway     *gatewayclient.Clientset
 }
 
 type Config struct {
-  InCluster       bool    `yaml:"inCluster"`
-  KubeConfigPath  string  `yaml:"kubeConfigPath"`
+  InCluster         bool      `yaml:"inCluster"`
+  KubeConfigPath    string    `yaml:"kubeConfigPath"`
+  Namespaces        []string  `yaml:"namespaces"`
+  ExcludeNamespaces []string  `yaml:"excludeNamespaces"`
 }
 
 type RouteEndpoint struct {
@@ -43,7 +47,7 @@ type gatewayListener struct {
   allowedRoutes *v1.AllowedRoutes
 }
 
-func newInClusterConfig() (*KubeClient, error) {
+func newInClusterConfig(conf Config) (*KubeClient, error) {
   slog.Info("create in-cluster kubernetes client")
   config, err := rest.InClusterConfig()
   if err != nil {
@@ -58,12 +62,14 @@ func newInClusterConfig() (*KubeClient, error) {
     return nil, fmt.Errorf("create gateway clientset: %w", err)
   }
   return &KubeClient{
+    config: &conf,
     kubernetes: kubeClient,
     gateway: gatewayClient,
   }, nil
 }
 
-func newLocalConfig(kubeConfigPath string) (*KubeClient, error) {
+func newLocalConfig(conf Config) (*KubeClient, error) {
+  kubeConfigPath := conf.KubeConfigPath
   slog.Info("create local kubernetes client", "path", kubeConfigPath)
   if kubeConfigPath == "" {
     return nil, fmt.Errorf("kube config path missing")
@@ -81,9 +87,26 @@ func newLocalConfig(kubeConfigPath string) (*KubeClient, error) {
     return nil, fmt.Errorf("create gateway clientset: %w", err)
   }
   return &KubeClient{
+    config: &conf,
     kubernetes: kubeClient,
     gateway: gatewayClient,
   }, nil
+}
+
+func (k *KubeClient) isNamespaceIncluded(ns string) bool {
+  // no filter applied
+  if k.config.Namespaces == nil && k.config.ExcludeNamespaces == nil {
+    return true
+  }
+  // namespace whitelist does not contain ns
+  if k.config.Namespaces != nil && len(k.config.Namespaces) > 0 && !slices.Contains(k.config.Namespaces, ns) {
+    return false
+  }
+  // namespace blacklist contains ns
+  if k.config.ExcludeNamespaces != nil && len(k.config.ExcludeNamespaces) > 0 && slices.Contains(k.config.ExcludeNamespaces, ns) {
+    return false
+  }
+  return true
 }
 
 func (k *KubeClient) getListenerSet(ctx context.Context, ns string, ref v1.ParentReference) (*v1.ListenerSet, error) {
@@ -244,13 +267,13 @@ func (k *KubeClient) getRouteEndpoints(ctx context.Context,
 
 func New(conf Config) (*KubeClient, error) {
   if conf.InCluster {
-    client, err := newInClusterConfig()
+    client, err := newInClusterConfig(conf)
     if err != nil {
       return nil, fmt.Errorf("create in-cluster client: %w", err)
     }
     return client, nil
   }
-  client, err := newLocalConfig(conf.KubeConfigPath)
+  client, err := newLocalConfig(conf)
   if err != nil {
     return nil, fmt.Errorf("create local client: %w", err)
   }

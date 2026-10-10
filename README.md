@@ -29,10 +29,14 @@ Configuration parameters can be supplied using *environment variables*, a *confi
 ```bash
 gateway-monitor --help
 Usage of gateway-monitor:
+  -excludeNamespaces string
+        namespace blacklist for Route resources, space separated
   -incluster
         if the application runs inside of kubernetes
   -kubeconfig string
         (optional) absolute path to kube config file (default "/Users/wustus/.kube/config")
+  -namespaces string
+        namespace whitelist for Route resources, space separated
   -schedule string
         cron schedule for the monitor function (default "@every 30s")
   -timeout duration
@@ -45,7 +49,9 @@ The following environment variables are parsed by the application:
 
 - `GWM_CONFIG_PATH` sets the path to the `gateway-monitor` configuration file (default: `/etc/gateway-monitor.yaml`)
 - `GWM_INCLUSTER` signals that the application runs inside a Kubernetes cluster (default: `false`)
-- `GWM_KUBECONFIGPATH` set the path to the `kubeconfig` file (default: `$HOME/.kube/config` if `$HOME` is set, empty otherwise)
+- `GWM_KUBECONFIGPATH` sets the path to the `kubeconfig` file (default: `$HOME/.kube/config` if `$HOME` is set, empty otherwise)
+- `GWM_NAMESPACES` sets the namespace whitelist for `Route` resources, space separated
+- `GWM_EXCLUDE_NAMESPACES` sets the namespace blacklist for `Route` resources, space separated
 - `GWM_SCHEDULE` the cron schedule for the monitor function (default: `@every 30s`)
 - `GWM_TIMEOUT` the probe request timeout (default 30s)
 
@@ -57,6 +63,8 @@ By default, the (optional) configuration file is expected at `/etc/gateway-monit
 kubernetes:
   inCluster: false
   kubeConfigPath: "/Users/notwustus/.kube/config"
+  namespaces: []
+  excludeNamespaces: []
 monitor:
   schedule: "@every 1m"
   timeout: "30s"

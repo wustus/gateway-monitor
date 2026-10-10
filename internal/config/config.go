@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/wustus/gateway-monitor/internal/gatewaymonitor"
@@ -30,6 +31,8 @@ var configPath string = "/etc/gateway-monitor.yaml"
 var inClusterDefault bool = false
 var scheduleDefault string = "@every 30s"
 var timeoutDefault time.Duration = 30 * time.Second
+var namespacesDefault string = ""
+var excludeNamespacesDefault string = ""
 var kubeConfigPathDefault string = ""
 
 func (c *Config) getConfigFromEnv() error {
@@ -48,6 +51,12 @@ func (c *Config) getConfigFromEnv() error {
   }
   if kubeConfigPathEnv := os.Getenv("GWM_KUBECONFIGPATH"); kubeConfigPathEnv != "" {
     c.Kubernetes.KubeConfigPath = kubeConfigPathEnv
+  }
+  if namespaces := os.Getenv("GWM_NAMESPACES"); namespaces != "" {
+    c.Kubernetes.Namespaces = strings.Fields(namespaces)
+  }
+  if excludeNamespaces := os.Getenv("GWM_EXCLUDE_NAMESPACES"); excludeNamespaces != "" {
+    c.Kubernetes.ExcludeNamespaces = strings.Fields(excludeNamespaces)
   }
   if schedule := os.Getenv("GWM_SCHEDULE"); schedule != "" {
     c.Monitor.Schedule = schedule
@@ -83,7 +92,7 @@ func (c *Config) getConfigFromFile() error {
 
 func (c *Config) parseArgs(args []string) error {
   flags := flag.NewFlagSet("gateway-monitor", flag.ContinueOnError)
-  var kubeConfigPath, schedule string
+  var kubeConfigPath, schedule, namespaces, excludeNamespaces string
   var inCluster bool
   var timeout time.Duration
 
@@ -109,6 +118,18 @@ func (c *Config) parseArgs(args []string) error {
     "if the application runs inside of kubernetes",
   )
   flags.StringVar(
+    &namespaces,
+    "namespaces",
+    namespacesDefault,
+    "namespace whitelist for Route resources, space separated",
+  )
+  flags.StringVar(
+    &excludeNamespaces,
+    "excludeNamespaces",
+    excludeNamespacesDefault,
+    "namespace blacklist for Route resources, space separated",
+  )
+  flags.StringVar(
     &schedule,
     "schedule",
     scheduleDefault,
@@ -129,6 +150,10 @@ func (c *Config) parseArgs(args []string) error {
       c.Kubernetes.KubeConfigPath = kubeConfigPath
     case "incluster":
       c.Kubernetes.InCluster = inCluster
+    case "namespaces":
+      c.Kubernetes.Namespaces = strings.Fields(namespaces)
+    case "excludeNamespaces":
+      c.Kubernetes.ExcludeNamespaces = strings.Fields(excludeNamespaces)
     case "schedule":
       c.Monitor.Schedule = schedule
     case "timeout":

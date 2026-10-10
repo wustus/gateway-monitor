@@ -32,6 +32,9 @@ func (k *KubeClient) GetTLSRouteEndpoints(ctx context.Context) ([]RouteEndpoint,
   }
   var endpoints []RouteEndpoint
   for _, route := range tlsroutes.Items {
+    if !k.isNamespaceIncluded(route.Namespace) {
+      continue
+    }
     routeHostnames := route.Spec.Hostnames
     for _, ref := range route.Spec.ParentRefs {
       ns := route.Namespace

@@ -31,6 +31,9 @@ func (k *KubeClient) GetHTTPRouteEndpoints(ctx context.Context) ([]RouteEndpoint
   }
   var endpoints []RouteEndpoint
   for _, route := range httproutes.Items {
+    if !k.isNamespaceIncluded(route.Namespace) {
+      continue
+    }
     routeHostnames := route.Spec.Hostnames
     // hostnames field is optional
     //  see: https://gateway-api.sigs.k8s.io/docs/concepts/hostnames/#routes-httproute-grpcroute-and-tlsroute

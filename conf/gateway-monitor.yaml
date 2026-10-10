@@ -4,6 +4,8 @@
 kubernetes:
   inCluster: false
   kubeConfigPath: "/Users/wustus/.kube/config"
+  namespaces: []
+  excludeNamespaces: []
 monitor:
   schedule: "@every 1m"
   timeout: "30s"

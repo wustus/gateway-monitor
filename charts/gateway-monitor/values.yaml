@@ -12,8 +12,11 @@ fullnameOverride: ""
 config:
   kubernetes:
     inCluster: true
+    namespaces: []
+    excludeNamespaces: []
   monitor:
     schedule: "@every 30s"
+    timeout: 30s
 
 serviceAccount:
   # Specifies whether a service account should be created.
