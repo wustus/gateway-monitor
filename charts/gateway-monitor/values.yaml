@@ -10,7 +10,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 config:
-  client:
+  kubernetes:
     inCluster: true
   monitor:
     schedule: "@every 30s"

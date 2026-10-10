@@ -20,7 +20,7 @@ import (
 
 
 type Config struct {
-  Client  *kubeclient.Config      `yaml:"client"`
+  Kubernetes  *kubeclient.Config  `yaml:"kubernetes"`
   Monitor *gatewaymonitor.Config  `yaml:"monitor"`
 }
 
@@ -41,10 +41,10 @@ func (c *Config) getConfigFromEnv() error {
         err,
       )
     }
-    c.Client.InCluster = inCluster
+    c.Kubernetes.InCluster = inCluster
   }
   if kubeConfigPathEnv := os.Getenv("GWM_KUBECONFIGPATH"); kubeConfigPathEnv != "" {
-    c.Client.KubeConfigPath = kubeConfigPathEnv
+    c.Kubernetes.KubeConfigPath = kubeConfigPathEnv
   }
   if schedule := os.Getenv("GWM_SCHEDULE"); schedule != "" {
     c.Monitor.Schedule = schedule
@@ -106,9 +106,9 @@ func (c *Config) parseArgs(args []string) error {
   flags.Visit(func(f *flag.Flag) {
     switch f.Name {
     case "kubeconfig":
-      c.Client.KubeConfigPath = kubeConfigPath
+      c.Kubernetes.KubeConfigPath = kubeConfigPath
     case "incluster":
-      c.Client.InCluster = inCluster
+      c.Kubernetes.InCluster = inCluster
     case "schedule":
       c.Monitor.Schedule = schedule
     }
@@ -117,7 +117,7 @@ func (c *Config) parseArgs(args []string) error {
 }
 
 func (c *Config) validate() error {
-  if !c.Client.InCluster && c.Client.KubeConfigPath == "" {
+  if !c.Kubernetes.InCluster && c.Kubernetes.KubeConfigPath == "" {
     return fmt.Errorf("local config but no kube config path was provided")
   }
   return nil
@@ -128,7 +128,7 @@ func getDefaultConfig() *Config {
     kubeConfigPathDefault = filepath.Join(home, ".kube", "config")
   }
   return &Config{
-    Client: &kubeclient.Config{
+    Kubernetes: &kubeclient.Config{
       InCluster: inClusterDefault,
       KubeConfigPath: kubeConfigPathDefault,
     },

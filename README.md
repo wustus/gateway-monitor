@@ -51,7 +51,7 @@ The following environment variables are parsed by the application:
 By default, the (optional) configuration file is expected at `/etc/gateway-monitor.yaml`.
 
 ```yaml
-client:
+kubernetes:
   inCluster: false
   kubeConfigPath: "/Users/notwustus/.kube/config"
 monitor:

@@ -1,7 +1,7 @@
 # Copyright 2026 Justus Stahlhut
 # SPDX-License-Identifier: Apache-2.0
 
-client:
+kubernetes:
   inCluster: false
   kubeConfigPath: "/Users/wustus/.kube/config"
 monitor:

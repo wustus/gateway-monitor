@@ -26,11 +26,11 @@ func TestConfigDefaultValues(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
-  if conf.Client.InCluster {
+  if conf.Kubernetes.InCluster {
     t.Error("client.inCluster is true, expecting false")
   }
-  if conf.Client.KubeConfigPath != "" {
-    t.Errorf("client.kubeConfigPath is %s, expecting empty string", conf.Client.KubeConfigPath)
+  if conf.Kubernetes.KubeConfigPath != "" {
+    t.Errorf("client.kubeConfigPath is %s, expecting empty string", conf.Kubernetes.KubeConfigPath)
   }
   if conf.Monitor.Schedule != "@every 30s" {
     t.Error("monitor.schedule is not '@every 30s'")
@@ -46,11 +46,11 @@ func TestConfigFromEnv(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
-  if !conf.Client.InCluster {
+  if !conf.Kubernetes.InCluster {
     t.Error("client.inCluster is false, expecting true")
   }
-  if conf.Client.KubeConfigPath != "/dev/null" {
-    t.Errorf("client.kubeConfigPath is %s, expecting /dev/null", conf.Client.KubeConfigPath)
+  if conf.Kubernetes.KubeConfigPath != "/dev/null" {
+    t.Errorf("client.kubeConfigPath is %s, expecting /dev/null", conf.Kubernetes.KubeConfigPath)
   }
   if conf.Monitor.Schedule != "@every 1s" {
     t.Error("monitor.schedule is not '@every 1s'")
@@ -63,7 +63,7 @@ func TestConfigFromFile(t *testing.T) {
   dir := os.TempDir()
   configPath := filepath.Join(dir, "gwm.yaml")
   configData := []byte(`
-client:
+kubernetes:
   inCluster: true
   kubeConfigPath: "/home/wustus/.kube/config"
 monitor:
@@ -77,11 +77,11 @@ monitor:
   if err != nil {
     t.Fatal(err)
   }
-  if !conf.Client.InCluster {
+  if !conf.Kubernetes.InCluster {
     t.Error("client.inCluster is false, expecting true")
   }
-  if conf.Client.KubeConfigPath != "/home/wustus/.kube/config" {
-    t.Errorf("client.kubeConfigPath is %s, expecting /home/wustus/.kube/config", conf.Client.KubeConfigPath)
+  if conf.Kubernetes.KubeConfigPath != "/home/wustus/.kube/config" {
+    t.Errorf("client.kubeConfigPath is %s, expecting /home/wustus/.kube/config", conf.Kubernetes.KubeConfigPath)
   }
   if conf.Monitor.Schedule != "@every 1m" {
     t.Error("monitor.schedule is not '@every 1m'")
@@ -101,11 +101,11 @@ func TestConfigFromArgs(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
-  if !conf.Client.InCluster {
+  if !conf.Kubernetes.InCluster {
     t.Error("client.inCluster is false, expecting true")
   }
-  if conf.Client.KubeConfigPath != "/dev/null" {
-    t.Errorf("client.kubeConfigPath is %s, expecting /dev/null", conf.Client.KubeConfigPath)
+  if conf.Kubernetes.KubeConfigPath != "/dev/null" {
+    t.Errorf("client.kubeConfigPath is %s, expecting /dev/null", conf.Kubernetes.KubeConfigPath)
   }
   if conf.Monitor.Schedule != "@every 1y" {
     t.Error("monitor.schedule is not '@every 1y'")
@@ -120,7 +120,7 @@ func TestConfigPrecedence(t *testing.T) {
   dir := os.TempDir()
   configPath := filepath.Join(dir, "gwm.yaml")
   configData := []byte(`
-client:
+kubernetes:
   inCluster: false
   kubeConfigPath: "/home/wustus/.kube/config"
 monitor:
@@ -135,11 +135,11 @@ monitor:
   if err != nil {
     t.Fatal(err)
   }
-  if conf.Client.InCluster {
+  if conf.Kubernetes.InCluster {
     t.Error("client.inCluster is true, expecting false")
   }
-  if conf.Client.KubeConfigPath != "/home/wustus/.kube/config" {
-    t.Errorf("client.kubeConfigPath is %s, expecting /home/wustus/.kube/config", conf.Client.KubeConfigPath)
+  if conf.Kubernetes.KubeConfigPath != "/home/wustus/.kube/config" {
+    t.Errorf("client.kubeConfigPath is %s, expecting /home/wustus/.kube/config", conf.Kubernetes.KubeConfigPath)
   }
   if conf.Monitor.Schedule != "@every 1m" {
     t.Error("monitor.schedule is not '@every 1m'")
@@ -153,11 +153,11 @@ monitor:
   }
   // passed args > file config
   conf, err = load(args)
-  if !conf.Client.InCluster {
+  if !conf.Kubernetes.InCluster {
     t.Error("client.inCluster is false, expecting true")
   }
-  if conf.Client.KubeConfigPath != "/dev/null" {
-    t.Errorf("client.kubeConfigPath is %s, expecting /dev/null", conf.Client.KubeConfigPath)
+  if conf.Kubernetes.KubeConfigPath != "/dev/null" {
+    t.Errorf("client.kubeConfigPath is %s, expecting /dev/null", conf.Kubernetes.KubeConfigPath)
   }
   if conf.Monitor.Schedule != "@every 1y" {
     t.Error("monitor.schedule is not '@every 1y'")

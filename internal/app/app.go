@@ -18,7 +18,7 @@ func Run(ctx context.Context, args []string) error {
   if err != nil {
     log.Fatalf("error loading config: %v", err)
   }
-  client, err := kubeclient.New(*conf.Client)
+  client, err := kubeclient.New(*conf.Kubernetes)
   if err != nil {
     log.Fatalf("error creating client: %v", err)
   }
