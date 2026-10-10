@@ -1,6 +1,3 @@
-# Copyright 2026 Justus Stahlhut
-# SPDX-License-Identifier: Apache-2.0
-
 apiVersion: v2
 name: gateway-monitor
 description: A Kubernetes monitoring tool that exports Prometheus metrics for Gateway API resources.
