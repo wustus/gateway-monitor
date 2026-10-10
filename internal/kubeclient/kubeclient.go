@@ -109,7 +109,7 @@ func (k *KubeClient) getGateway(ctx context.Context, ns string, ref v1.ParentRef
   if err != nil {
     nsName := name
     if ns != "" { nsName = fmt.Sprintf("%s/%s", ns, name) }
-    return nil, fmt.Errorf("get ListenerSet %s: %w", nsName, err)
+    return nil, fmt.Errorf("get Gateway %s: %w", nsName, err)
   }
   return gateway, nil
 }
