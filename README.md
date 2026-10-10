@@ -28,6 +28,15 @@ Configuration parameters can be supplied using *environment variables*, a *confi
 
 ```bash
 gateway-monitor --help
+
+_______   __     __  ____  ___
+       │    │      │     \    │
+  │ ___     │ _    │   │      │
+  │    │    │  │   │   │  │   │
+  │__  │    │__│_  │   │      │
+       │          /    │      │
+                gateway-monitor
+
 Usage of gateway-monitor:
   -excludeNamespaces string
         namespace blacklist for Route resources, space separated
