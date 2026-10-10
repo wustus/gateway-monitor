@@ -107,7 +107,7 @@ func (p *HTTPProbe) probeHTTPS(ctx context.Context, target ProbeTarget) (Result,
   }
   req, err := http.NewRequestWithContext(ctx, "GET", targetURL, nil)
   if err != nil {
-    return &TLSProbeResult{
+    return &HTTPProbeResult{
       ProbeResult: ProbeResult{
         Error: true,
       },
@@ -119,7 +119,7 @@ func (p *HTTPProbe) probeHTTPS(ctx context.Context, target ProbeTarget) (Result,
   end := time.Now()
   responseTime := end.Sub(start)
   if err != nil {
-    return &TLSProbeResult{
+    return &HTTPProbeResult{
       ProbeResult: ProbeResult{
         Error: true,
       },
