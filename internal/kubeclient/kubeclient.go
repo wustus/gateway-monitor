@@ -10,6 +10,7 @@ import (
 
 	"github.com/wustus/gateway-monitor/internal/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -35,10 +36,11 @@ type RouteEndpoint struct {
 }
 
 type gatewayListener struct {
-  protocol  string
-  name      string
-  port      int
-  hostname  *string
+  protocol      string
+  name          string
+  port          int
+  hostname      *string
+  allowedRoutes *v1.AllowedRoutes
 }
 
 func newInClusterConfig() (*KubeClient, error) {
@@ -114,8 +116,7 @@ func (k *KubeClient) getGateway(ctx context.Context, ns string, ref v1.ParentRef
   return gateway, nil
 }
 
-// Retrieves the Listener entries with protocol HTTP or HTTPS for the given parentRef.
-// TODO: evaluate allowedRoutes
+// Retrieves the Listener entries for the given parentRef.
 func (k *KubeClient) getParentRefListeners(ctx context.Context, ns string, ref v1.ParentReference) ([]gatewayListener, error) {
   kind := v1.Kind("Gateway")
   if ref.Kind != nil {
@@ -134,6 +135,7 @@ func (k *KubeClient) getParentRefListeners(ctx context.Context, ns string, ref v
         name: string(l.Name),
         port: int(l.Port),
         hostname: (*string)(l.Hostname),
+        allowedRoutes: l.AllowedRoutes,
       })
     }
   case v1.Kind("Gateway"):
@@ -147,6 +149,7 @@ func (k *KubeClient) getParentRefListeners(ctx context.Context, ns string, ref v
         name: string(l.Name),
         port: int(l.Port),
         hostname: (*string)(l.Hostname),
+        allowedRoutes: l.AllowedRoutes,
       })
     }
   default:
@@ -155,9 +158,42 @@ func (k *KubeClient) getParentRefListeners(ctx context.Context, ns string, ref v
   return listeners, nil
 }
 
+// Checks if the Listeners allowedRoutes allows route attachment from passed routes namespace.
+func (k *KubeClient) routeNamespaceAllowed(ctx context.Context, allowed *v1.AllowedRoutes, routeNamespace, parentNamespace string) (bool, error) {
+  client := k.kubernetes
+  if allowed == nil || allowed.Namespaces == nil || allowed.Namespaces.From == nil {
+    return routeNamespace == parentNamespace, nil
+  }
+  switch *allowed.Namespaces.From {
+  case v1.NamespacesFromAll:
+    return true, nil
+  case v1.NamespacesFromSame:
+    return routeNamespace == parentNamespace, nil
+  case v1.NamespacesFromSelector:
+    if allowed.Namespaces.Selector == nil {
+      return false, fmt.Errorf("namespace selector missing")
+    }
+    selector, err := metav1.LabelSelectorAsSelector(allowed.Namespaces.Selector)
+    if err != nil {
+      return false, err
+    }
+    namespace, err := client.CoreV1().Namespaces().Get(ctx, routeNamespace, metav1.GetOptions{})
+    if err != nil {
+      return false, err
+    }
+    return selector.Matches(labels.Set(namespace.Labels)), nil
+  }
+  return false, fmt.Errorf("unmapped namespace policy")
+}
+
 // Matches hostnames with the parents Listener entries and returns valid endpoints (protocol, hostname, port).
 //  Matching based on this: https://gateway-api.sigs.k8s.io/docs/concepts/hostnames
-func getRouteEndpoints(hostnames []v1.Hostname, parentRef v1.ParentReference, listeners []gatewayListener) []RouteEndpoint {
+func (k *KubeClient) getRouteEndpoints(ctx context.Context,
+  routeNamespace string,
+  hostnames []v1.Hostname,
+  parentRef v1.ParentReference,
+  listeners []gatewayListener,
+) ([]RouteEndpoint, error) {
   var listenerPortMap map[int][]gatewayListener = make(map[int][]gatewayListener)
   for _, l := range listeners {
     listenerPortMap[l.port] = append(listenerPortMap[l.port], l)
@@ -187,11 +223,23 @@ func getRouteEndpoints(hostnames []v1.Hostname, parentRef v1.ParentReference, li
         if intersectedHostname == "*" {
           continue
         }
+        // allowewdRoutes filter
+        parentNamespace := routeNamespace
+        if parentRef.Namespace != nil {
+          parentNamespace = string(*parentRef.Namespace)
+        }
+        nsAllowed, err := k.routeNamespaceAllowed(ctx, l.allowedRoutes, routeNamespace, parentNamespace)
+        if err != nil {
+          return nil, fmt.Errorf("determine if route namespace is allowed: %w", err)
+        }
+        if !nsAllowed {
+          continue
+        }
         endpoints = append(endpoints, RouteEndpoint{Protocol: l.protocol, Hostname: intersectedHostname, Port: port})
       }
     }
   }
-  return endpoints
+  return endpoints, nil
 }
 
 func New(conf Config) (*KubeClient, error) {

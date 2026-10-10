@@ -39,16 +39,19 @@ func (k *KubeClient) doSSAR(ctx context.Context, namespace, verb, group, version
 // Tests the Kubernetes client for access to GatewayAPI resources.
 func (k *KubeClient) CheckPermissions(ctx context.Context) error {
   slog.Info("checking kube client permissions")
-  if err := k.doSSAR(ctx, "", "list", "gateway.networking.k8s.io", "v1", "httproutes", ""); err != nil {
-    return fmt.Errorf("check permissions: %v", err)
-  }
-  if err := k.doSSAR(ctx, "", "list", "gateway.networking.k8s.io", "v1", "tlsroutes", ""); err != nil {
+  if err := k.doSSAR(ctx, "", "get", "", "v1", "namespaces", ""); err != nil {
     return fmt.Errorf("check permissions: %v", err)
   }
   if err := k.doSSAR(ctx, "", "get", "gateway.networking.k8s.io", "v1", "gateways", ""); err != nil {
     return fmt.Errorf("check permissions: %v", err)
   }
   if err := k.doSSAR(ctx, "", "get", "gateway.networking.k8s.io", "v1", "listenersets", ""); err != nil {
+    return fmt.Errorf("check permissions: %v", err)
+  }
+  if err := k.doSSAR(ctx, "", "list", "gateway.networking.k8s.io", "v1", "httproutes", ""); err != nil {
+    return fmt.Errorf("check permissions: %v", err)
+  }
+  if err := k.doSSAR(ctx, "", "list", "gateway.networking.k8s.io", "v1", "tlsroutes", ""); err != nil {
     return fmt.Errorf("check permissions: %v", err)
   }
   slog.Info("permissions okay")

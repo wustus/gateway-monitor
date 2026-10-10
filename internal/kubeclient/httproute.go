@@ -52,7 +52,11 @@ func (k *KubeClient) GetHTTPRouteEndpoints(ctx context.Context) ([]RouteEndpoint
           httpListeners = append(httpListeners, l)
         }
       }
-      for _, ep := range getRouteEndpoints(routeHostnames, ref, httpListeners) {
+      routeEndpoints, err := k.getRouteEndpoints(ctx, ns, routeHostnames, ref, httpListeners)
+      if err != nil {
+        return nil, fmt.Errorf("get route endpoints: %w", err)
+      }
+      for _, ep := range routeEndpoints {
         endpoints = append(endpoints, ep)
       }
     }
