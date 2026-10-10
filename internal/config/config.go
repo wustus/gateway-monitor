@@ -35,6 +35,21 @@ var namespacesDefault string = ""
 var excludeNamespacesDefault string = ""
 var kubeConfigPathDefault string = ""
 
+func (c Config) LogValue() slog.Value {
+  return slog.GroupValue(
+    slog.Group("kubernetes",
+      slog.Bool("inCluster", c.Kubernetes.InCluster),
+      slog.String("kubeConfigPath", c.Kubernetes.KubeConfigPath),
+      slog.Any("namespaces", c.Kubernetes.Namespaces),
+      slog.Any("excludeNamespaces", c.Kubernetes.ExcludeNamespaces),
+    ),
+    slog.Group("monitor",
+      slog.String("schedule", c.Monitor.Schedule),
+      slog.Duration("timeout", c.Monitor.Timeout),
+    ),
+  )
+}
+
 func (c *Config) getConfigFromEnv() error {
   if configPathEnv := os.Getenv("GWM_CONFIG_PATH"); configPathEnv != "" {
     configPath = configPathEnv
