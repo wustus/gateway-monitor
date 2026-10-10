@@ -14,9 +14,24 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strconv"
 	"testing"
 	"time"
 )
+
+func getTestTLSProbeTarget(t *testing.T, server *httptest.Server) (ProbeTarget, error) {
+  t.Helper()
+  u, err := url.Parse(server.URL)
+  if err != nil {
+    return ProbeTarget{}, err
+  }
+  port, err := strconv.Atoi(u.Port())
+  if err != nil {
+    return ProbeTarget{}, err
+  }
+  return ProbeTarget{Hostname: u.Hostname(), Port: port}, nil
+}
 
 func TestTLSProbe(t *testing.T) {
   tests := []struct{
@@ -26,18 +41,19 @@ func TestTLSProbe(t *testing.T) {
   }{
     {
       name: "200 is up",
-      statusCode: http.StatusOK,
+      statusCode: 200,
       wantUp: true,
     },
     {
       name: "404 is up",
-      statusCode: http.StatusNotFound,
+      statusCode: 404,
       wantUp: true,
     },
+    // status code does not factor in here
     {
       name: "500 is down",
-      statusCode: http.StatusInternalServerError,
-      wantUp: false,
+      statusCode: 500,
+      wantUp: true,
     },
   }
   for _, test := range tests {
@@ -49,16 +65,17 @@ func TestTLSProbe(t *testing.T) {
       ))
       defer server.Close()
       p := NewTLSProbe()
-      res, err := p.Probe(context.TODO(), server.URL)
+      target, err := getTestTLSProbeTarget(t, server)
+      if err != nil {
+        t.Fatal(err)
+      }
+      res, err := p.Probe(context.TODO(), target)
       if err != nil {
         t.Fatalf("Probe() error: %v", err)
       }
       got := res.(*TLSProbeResult)
       if got.IsUp() != test.wantUp {
         t.Errorf("IsUp() = %v, want %v", got.IsUp(), test.wantUp)
-      }
-      if got.StatusCode != test.statusCode {
-        t.Errorf("Status Code = %d, want %d", got.StatusCode, test.statusCode)
       }
       cert := server.Certificate()
       if got.NotBefore != cert.NotBefore.Unix() {
@@ -79,8 +96,12 @@ func TestTLSProbeError(t *testing.T) {
       },
     ))
     server.Close()
-    p := NewHTTPProbe()
-    res, err := p.Probe(context.TODO(), server.URL)
+    p := NewTLSProbe()
+    target, err := getTestTLSProbeTarget(t, server)
+    if err != nil {
+      t.Fatal(err)
+    }
+    res, err := p.Probe(context.TODO(), target)
     if err == nil {
       t.Fatal("expected Probe() to error")
     }
@@ -90,7 +111,7 @@ func TestTLSProbeError(t *testing.T) {
   })
 }
 
-func expiredCertificate(t *testing.T) tls.Certificate {
+func expiredTLSProbeCertificate(t *testing.T) tls.Certificate {
   t.Helper()
   privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
   if err != nil {
@@ -134,13 +155,17 @@ func TestTLSProbeExpiredCertificate(t *testing.T) {
     ))
   server.TLS = &tls.Config{
     Certificates: []tls.Certificate{
-      expiredCertificate(t),
+      expiredTLSProbeCertificate(t),
     },
   }
   server.StartTLS()
   defer server.Close()
   p := NewTLSProbe()
-  res, err := p.Probe(context.TODO(), server.URL)
+  target, err := getTestTLSProbeTarget(t, server)
+  if err != nil {
+    t.Fatal(err)
+  }
+  res, err := p.Probe(context.TODO(), target)
   if err != nil {
     t.Fatalf("Probe() error: %v", err)
   }
