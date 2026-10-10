@@ -1,3 +1,6 @@
+# Copyright 2026 Justus Stahlhut
+# SPDX-License-Identifier: Apache-2.0
+
 FROM golang:1.27.1 AS build
 WORKDIR /src
 COPY go.mod go.sum ./
