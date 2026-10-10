@@ -4,6 +4,18 @@ kind: ClusterRole
 metadata:
   name: {{ include "gateway-monitor.fullname" . }}
 rules:
+- apiGroups: [""]
+  resources:
+    - namespaces
+  verbs:
+    - get
+- apiGroups:
+    - gateway.networking.k8s.io
+  resources:
+    - gateways
+    - listenersets
+  verbs:
+    - get
 - apiGroups:
     - gateway.networking.k8s.io
   resources:
