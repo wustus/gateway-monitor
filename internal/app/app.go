@@ -23,8 +23,8 @@ _______   __     __  ____  ___
   │    │    │  │   │   │  │   │
   │__  │    │__│_  │   │      │
        │          /    │      │
-                gateway-monitor
-`)
+                gateway-monitor`)
+  fmt.Println()
 }
 
 func Run(ctx context.Context, args []string) error {
