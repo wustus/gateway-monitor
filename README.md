@@ -35,6 +35,8 @@ Usage of gateway-monitor:
         (optional) absolute path to kube config file (default "/Users/wustus/.kube/config")
   -schedule string
         cron schedule for the monitor function (default "@every 30s")
+  -timeout duration
+        probe request timeout (default 30s)
 ```
 
 ### Environment Variables
@@ -45,6 +47,7 @@ The following environment variables are parsed by the application:
 - `GWM_INCLUSTER` signals that the application runs inside a Kubernetes cluster (default: `false`)
 - `GWM_KUBECONFIGPATH` set the path to the `kubeconfig` file (default: `$HOME/.kube/config` if `$HOME` is set, empty otherwise)
 - `GWM_SCHEDULE` the cron schedule for the monitor function (default: `@every 30s`)
+- `GWM_TIMEOUT` the probe request timeout (default 30s)
 
 ### Configuration File
 
@@ -56,6 +59,7 @@ kubernetes:
   kubeConfigPath: "/Users/notwustus/.kube/config"
 monitor:
   schedule: "@every 1m"
+  timeout: "30s"
 ```
 
 ## Metrics

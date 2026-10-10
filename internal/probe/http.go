@@ -30,9 +30,10 @@ type HTTPProbe struct {
   client  http.Client
 }
 
-func NewHTTPProbe() HTTPProbe {
+func NewHTTPProbe(timeout time.Duration) HTTPProbe {
   return HTTPProbe{
     client: http.Client{
+      Timeout: timeout,
       Transport: &http.Transport{
         TLSClientConfig: &tls.Config{
           InsecureSkipVerify: true, // CA might not be trusted and cause a failed request

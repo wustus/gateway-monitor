@@ -64,7 +64,7 @@ func TestTLSProbe(t *testing.T) {
         },
       ))
       defer server.Close()
-      p := NewTLSProbe()
+      p := NewTLSProbe(0)
       target, err := getTestTLSProbeTarget(t, server)
       if err != nil {
         t.Fatal(err)
@@ -96,7 +96,7 @@ func TestTLSProbeError(t *testing.T) {
       },
     ))
     server.Close()
-    p := NewTLSProbe()
+    p := NewTLSProbe(0)
     target, err := getTestTLSProbeTarget(t, server)
     if err != nil {
       t.Fatal(err)
@@ -160,7 +160,7 @@ func TestTLSProbeExpiredCertificate(t *testing.T) {
   }
   server.StartTLS()
   defer server.Close()
-  p := NewTLSProbe()
+  p := NewTLSProbe(0)
   target, err := getTestTLSProbeTarget(t, server)
   if err != nil {
     t.Fatal(err)

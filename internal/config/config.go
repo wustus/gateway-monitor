@@ -7,12 +7,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/wustus/gateway-monitor/internal/gatewaymonitor"
-	"github.com/wustus/gateway-monitor/internal/kubeclient"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
+
+	"github.com/wustus/gateway-monitor/internal/gatewaymonitor"
+	"github.com/wustus/gateway-monitor/internal/kubeclient"
 
 	"go.yaml.in/yaml/v3"
 	"k8s.io/client-go/util/homedir"
@@ -27,6 +29,7 @@ type Config struct {
 var configPath string = "/etc/gateway-monitor.yaml"
 var inClusterDefault bool = false
 var scheduleDefault string = "@every 30s"
+var timeoutDefault time.Duration = 30 * time.Second
 var kubeConfigPathDefault string = ""
 
 func (c *Config) getConfigFromEnv() error {
@@ -48,6 +51,16 @@ func (c *Config) getConfigFromEnv() error {
   }
   if schedule := os.Getenv("GWM_SCHEDULE"); schedule != "" {
     c.Monitor.Schedule = schedule
+  }
+  if timeout := os.Getenv("GWM_TIMEOUT"); timeout != "" {
+    timeoutDuration, err := time.ParseDuration(timeout)
+    if err != nil {
+      return fmt.Errorf("GWM_TIMEOUT must be a duration, got %s: %w",
+        timeoutDuration,
+        err,
+      )
+    }
+    c.Monitor.Timeout = timeoutDuration
   }
   return nil
 }
@@ -72,6 +85,7 @@ func (c *Config) parseArgs(args []string) error {
   flags := flag.NewFlagSet("gateway-monitor", flag.ContinueOnError)
   var kubeConfigPath, schedule string
   var inCluster bool
+  var timeout time.Duration
 
   if kubeConfigPathDefault != "" {
     flags.StringVar(
@@ -100,6 +114,12 @@ func (c *Config) parseArgs(args []string) error {
     scheduleDefault,
     "cron schedule for the monitor function",
   )
+  flags.DurationVar(
+    &timeout,
+    "timeout",
+    timeoutDefault,
+    "probe request timeout",
+  )
   if err := flags.Parse(args); err != nil {
     return fmt.Errorf("parse flags: %w", err)
   }
@@ -111,6 +131,8 @@ func (c *Config) parseArgs(args []string) error {
       c.Kubernetes.InCluster = inCluster
     case "schedule":
       c.Monitor.Schedule = schedule
+    case "timeout":
+      c.Monitor.Timeout = timeout
     }
   })
   return nil
@@ -134,6 +156,7 @@ func getDefaultConfig() *Config {
     },
     Monitor: &gatewaymonitor.Config{
       Schedule: scheduleDefault,
+      Timeout: timeoutDefault,
     },
   }
 }

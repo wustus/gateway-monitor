@@ -19,10 +19,12 @@ type TLSProbeResult struct {
   Trusted     bool  // if the certificate authority is trusted
 }
 
-type TLSProbe struct { }
+type TLSProbe struct {
+  timeout time.Duration
+}
 
-func NewTLSProbe() TLSProbe {
-  return TLSProbe{}
+func NewTLSProbe(timeout time.Duration) TLSProbe {
+  return TLSProbe{timeout: timeout}
 }
 
 func (r *TLSProbeResult) IsUp() bool {
@@ -36,7 +38,9 @@ func (r *TLSProbeResult) Duration() time.Duration {
 func (p *TLSProbe) Probe(ctx context.Context, target ProbeTarget) (Result, error) {
   start := time.Now()
   conn, err := tls.DialWithDialer(
-    &net.Dialer{},
+    &net.Dialer{
+      Timeout: p.timeout,
+    },
     "tcp",
     fmt.Sprintf("%s:%d", target.Hostname, target.Port),
     &tls.Config{

@@ -6,3 +6,4 @@ kubernetes:
   kubeConfigPath: "/Users/wustus/.kube/config"
 monitor:
   schedule: "@every 1m"
+  timeout: "30s"

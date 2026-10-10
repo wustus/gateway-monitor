@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/wustus/gateway-monitor/internal/exporter"
 	"github.com/wustus/gateway-monitor/internal/kubeclient"
@@ -19,7 +20,8 @@ import (
 
 
 type Config struct {
-  Schedule  string  `yaml:"schedule"`
+  Schedule        string        `yaml:"schedule"`
+  Timeout         time.Duration `yaml:"timeout"`
 }
 
 type GatewayMonitor struct {
@@ -41,7 +43,7 @@ func (gwm *GatewayMonitor) run(ctx context.Context) error {
   if err != nil {
     return fmt.Errorf("getting HTTPRoute endpoints: %w", err)
   }
-  httpProbe := probe.NewHTTPProbe()
+  httpProbe := probe.NewHTTPProbe(gwm.config.Timeout)
   for _, ep := range httpEndpoints {
     hostname := ep.Hostname
     if util.IsWildcardDomain(hostname) {
@@ -60,7 +62,7 @@ func (gwm *GatewayMonitor) run(ctx context.Context) error {
   if err != nil {
     return fmt.Errorf("getting TLSRoute endpoints: %w", err)
   }
-  tlsProbe := probe.NewTLSProbe()
+  tlsProbe := probe.NewTLSProbe(gwm.config.Timeout)
   for _, ep := range tlsEndpoints {
     hostname := ep.Hostname
     if util.IsWildcardDomain(hostname) {

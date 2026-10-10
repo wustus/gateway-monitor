@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func setupTest(t *testing.T) {
@@ -16,6 +17,7 @@ func setupTest(t *testing.T) {
   t.Setenv("GWM_KUBECONFIGPATH", "")
   t.Setenv("GWM_SCHEDULE", "")
   t.Setenv("GWM_CONFIG_PATH", "")
+  t.Setenv("GWM_TIMEOUT", "")
   kubeConfigPathDefault = ""
   configPath = ""
 }
@@ -35,6 +37,9 @@ func TestConfigDefaultValues(t *testing.T) {
   if conf.Monitor.Schedule != "@every 30s" {
     t.Error("monitor.schedule is not '@every 30s'")
   }
+  if conf.Monitor.Timeout != 30 * time.Second {
+    t.Error("monitor.timeout is not '30s'")
+  }
 }
 
 func TestConfigFromEnv(t *testing.T) {
@@ -42,6 +47,7 @@ func TestConfigFromEnv(t *testing.T) {
   os.Setenv("GWM_INCLUSTER", "true")
   os.Setenv("GWM_KUBECONFIGPATH", "/dev/null")
   os.Setenv("GWM_SCHEDULE", "@every 1s")
+  os.Setenv("GWM_TIMEOUT", "1s")
   conf, err := load(nil)
   if err != nil {
     t.Fatal(err)
@@ -54,6 +60,9 @@ func TestConfigFromEnv(t *testing.T) {
   }
   if conf.Monitor.Schedule != "@every 1s" {
     t.Error("monitor.schedule is not '@every 1s'")
+  }
+  if conf.Monitor.Timeout != 1 * time.Second {
+    t.Error("monitor.timeout is not '1s'")
   }
 }
 
@@ -68,6 +77,7 @@ kubernetes:
   kubeConfigPath: "/home/wustus/.kube/config"
 monitor:
   schedule: "@every 1m"
+  timeout: "2s"
 `)
   if err := os.WriteFile(configPath, configData, 0o600); err != nil {
     t.Fatal(err)
@@ -86,6 +96,9 @@ monitor:
   if conf.Monitor.Schedule != "@every 1m" {
     t.Error("monitor.schedule is not '@every 1m'")
   }
+  if conf.Monitor.Timeout != 2 * time.Second {
+    t.Error("monitor.timeout is not '2s'")
+  }
 }
 
 func TestConfigFromArgs(t *testing.T) {
@@ -96,6 +109,8 @@ func TestConfigFromArgs(t *testing.T) {
     "/dev/null",
     "--schedule",
     "@every 1y",
+    "--timeout",
+    "3s",
   }
   conf, err := load(args)
   if err != nil {
@@ -110,6 +125,9 @@ func TestConfigFromArgs(t *testing.T) {
   if conf.Monitor.Schedule != "@every 1y" {
     t.Error("monitor.schedule is not '@every 1y'")
   }
+  if conf.Monitor.Timeout != 3 * time.Second {
+    t.Error("monitor.timeout is not '3s'")
+  }
 }
 
 func TestConfigPrecedence(t *testing.T) {
@@ -117,6 +135,7 @@ func TestConfigPrecedence(t *testing.T) {
   os.Setenv("GWM_INCLUSTER", "true")
   os.Setenv("GWM_KUBECONFIGPATH", "/dev/null")
   os.Setenv("GWM_SCHEDULE", "@every 1s")
+  os.Setenv("GWM_TIMEOUT", "1s")
   dir := os.TempDir()
   configPath := filepath.Join(dir, "gwm.yaml")
   configData := []byte(`
@@ -125,6 +144,7 @@ kubernetes:
   kubeConfigPath: "/home/wustus/.kube/config"
 monitor:
   schedule: "@every 1m"
+  timeout: "2s"
 `)
   if err := os.WriteFile(configPath, configData, 0o600); err != nil {
     t.Fatal(err)
@@ -144,12 +164,17 @@ monitor:
   if conf.Monitor.Schedule != "@every 1m" {
     t.Error("monitor.schedule is not '@every 1m'")
   }
+  if conf.Monitor.Timeout != 2 * time.Second {
+    t.Error("monitor.schedule is not '2s'")
+  }
   args := []string{
     "--incluster",
     "--kubeconfig",
     "/dev/null",
     "--schedule",
     "@every 1y",
+    "--timeout",
+    "3s",
   }
   // passed args > file config
   conf, err = load(args)
@@ -161,6 +186,9 @@ monitor:
   }
   if conf.Monitor.Schedule != "@every 1y" {
     t.Error("monitor.schedule is not '@every 1y'")
+  }
+  if conf.Monitor.Timeout != 3 * time.Second {
+    t.Error("monitor.timeout is not '3s'")
   }
 }
 

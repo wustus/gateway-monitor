@@ -77,7 +77,7 @@ func TestHTTPProbe(t *testing.T) {
         },
       ))
       defer server.Close()
-      p := NewHTTPProbe()
+      p := NewHTTPProbe(0)
       target, err := getTestHTTPProbeTarget(t, server)
       if err != nil {
         t.Fatal(err)
@@ -105,7 +105,7 @@ func TestHTTPProbeError(t *testing.T) {
       },
     ))
     server.Close()
-    p := NewHTTPProbe()
+    p := NewHTTPProbe(0)
     target, err := getTestHTTPProbeTarget(t, server)
     if err != nil {
       t.Fatal(err)
@@ -151,7 +151,7 @@ func TestHTTPSProbe(t *testing.T) {
         },
       ))
       defer server.Close()
-      p := NewHTTPProbe()
+      p := NewHTTPProbe(0)
       target, err := getTestHTTPSProbeTarget(t, server)
       if err != nil {
         t.Fatal(err)
@@ -183,7 +183,7 @@ func TestHTTPSProbeError(t *testing.T) {
       },
     ))
     server.Close()
-    p := NewHTTPProbe()
+    p := NewHTTPProbe(0)
     target, err := getTestHTTPSProbeTarget(t, server)
     if err != nil {
       t.Fatal(err)
@@ -247,7 +247,7 @@ func TestHTTPSProbeExpiredCertificate(t *testing.T) {
   }
   server.StartTLS()
   defer server.Close()
-  p := NewHTTPProbe()
+  p := NewHTTPProbe(0)
   target, err := getTestHTTPSProbeTarget(t, server)
   if err != nil {
     t.Fatal(err)
