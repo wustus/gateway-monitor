@@ -127,7 +127,7 @@ func NewHTTPExporter() HTTPExporter {
 }
 
 func (e *HTTPExporter) Export(target probe.ProbeTarget, probeResult probe.HTTPProbeResult) {
-  protocol := target.Protocol
+  protocol := strings.ToLower(target.Protocol)
   hostname := target.Hostname
   // we don't make any assumptions about probe result, just export the error and skip everything else
   if probeResult.Error {
