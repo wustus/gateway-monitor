@@ -82,7 +82,7 @@ func (p *HTTPProbe) probeHTTP(ctx context.Context, target ProbeTarget) (Result, 
       ProbeResult: ProbeResult{
         Error: true,
       },
-    }, fmt.Errorf("request target %s: %w", target, err)
+    }, fmt.Errorf("request target %s: %w", target.Hostname, err)
   }
   defer res.Body.Close()
   statusCode := res.StatusCode
@@ -123,7 +123,7 @@ func (p *HTTPProbe) probeHTTPS(ctx context.Context, target ProbeTarget) (Result,
       ProbeResult: ProbeResult{
         Error: true,
       },
-    }, fmt.Errorf("request target %s: %w", target, err)
+    }, fmt.Errorf("request target %s: %w", target.Hostname, err)
   }
   defer res.Body.Close()
   if res.TLS == nil || len(res.TLS.PeerCertificates) == 0 {
