@@ -4,7 +4,7 @@ description: A Kubernetes monitoring tool that exports Prometheus metrics for Ga
 type: application
 
 version: 0.1.1
-appVersion: "0.2.0"
+appVersion: "0.2.1"
 
 home: https://github.com/wustus/gateway-monitor
 sources:
