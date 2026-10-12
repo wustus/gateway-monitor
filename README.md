@@ -6,6 +6,26 @@ Currently supported resources:
 - `HTTPRoute`
 - `TLSRoute`
 
+## Quickstart
+
+To install the Helm Chart with its default values, run:
+
+```bash
+helm upgrade --install gateway-monitor \
+  oci://ghcr.io/wustus/charts/gateway-monitor \
+  --version 0.1.2 \
+  --namespace gateway-monitor \
+  --create-namespace
+
+# adding the prometheus.io/scrape annotation
+helm upgrade --install gateway-monitor \
+  oci://ghcr.io/wustus/charts/gateway-monitor \
+  --version 0.1.2 \
+  --set-string 'podAnnotations.prometheus\.io/scrape=true' \
+  --namespace gateway-monitor \
+  --create-namespace
+```
+
 ## How it Works
 
 In a specified interval (cron), the `HTTPRoute` and `TLSRoute` manifests of the Kubernetes cluster are listed and their hostnames extracted. Using the `parentRef`, we retrieve the `Gateway` / `ListenerSet` parent, carrying out [hostname intersection](https://gateway-api.sigs.k8s.io/docs/concepts/hostnames/#hostname-intersection), filtering for `Protocol`, `Port` and `SectionName` to find the correct protocol, hostname and port to request.
