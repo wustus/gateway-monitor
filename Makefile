@@ -1,7 +1,7 @@
 BINARY := gateway-monitor
 BIN_DIR := bin
 VERSION ?= $(shell git describe --tags --dirty 2>/dev/null || echo "dev")
-LDFLAGS := -X github.com/wustus/gateway-monitor/internal/version/version.Version=$(VERSION)
+LDFLAGS := -X github.com/wustus/gateway-monitor/internal/version.Version=$(VERSION)
 
 .PHONY: build build-linux test vet clean docker help
 

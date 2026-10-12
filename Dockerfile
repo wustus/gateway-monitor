@@ -11,7 +11,7 @@ ARG VERSION=dev
 
 RUN CGO_ENABLED=0 go build \
   -trimpath \
-  -ldflags "-X github.com/wustus/gateway-monitor/internal/version/version.Version=${VERSION}" \
+  -ldflags "-X github.com/wustus/gateway-monitor/internal/version.Version=${VERSION}" \
   -o /gateway-monitor \
   .
 
