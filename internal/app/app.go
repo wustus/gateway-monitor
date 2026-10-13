@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"os"
 
 	"github.com/wustus/gateway-monitor/internal/config"
 	"github.com/wustus/gateway-monitor/internal/gatewaymonitor"
@@ -16,7 +17,8 @@ import (
 )
 
 func logo() {
-  fmt.Println(`
+  // slog writes to stderr by default and this can mix up the logo with startup logs
+  fmt.Fprintln(os.Stderr, `
 _______   __     __  ____  ___
        │    │      │     \    │
   │ ___     │ _    │   │      │
@@ -24,7 +26,7 @@ _______   __     __  ____  ___
   │__  │    │__│_  │   │      │
        │          /    │      │
                 gateway-monitor`)
-  fmt.Println()
+  fmt.Println(os.Stderr)
 }
 
 func Run(ctx context.Context, args []string) error {
