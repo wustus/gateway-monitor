@@ -48,7 +48,7 @@ type gatewayListener struct {
 }
 
 func newInClusterConfig(conf Config) (*KubeClient, error) {
-  slog.Info("create in-cluster kubernetes client")
+  slog.Debug("create in-cluster kubernetes client")
   config, err := rest.InClusterConfig()
   if err != nil {
     return nil, fmt.Errorf("create config: %w", err)
@@ -70,7 +70,7 @@ func newInClusterConfig(conf Config) (*KubeClient, error) {
 
 func newLocalConfig(conf Config) (*KubeClient, error) {
   kubeConfigPath := conf.KubeConfigPath
-  slog.Info("create local kubernetes client", "path", kubeConfigPath)
+  slog.Debug("create local kubernetes client", "path", kubeConfigPath)
   if kubeConfigPath == "" {
     return nil, fmt.Errorf("kube config path missing")
   }
