@@ -62,7 +62,11 @@ func (p *TLSProbe) Probe(ctx context.Context, target ProbeTarget) (Result, error
   responseTime := end.Sub(start)
   connState := conn.ConnectionState()
   if len(connState.PeerCertificates) == 0 {
-    return nil, fmt.Errorf("no TLS certificate")
+    return &TLSProbeResult{
+      ProbeResult: ProbeResult{
+        Error: true,
+      },
+    }, fmt.Errorf("no TLS certificate")
   }
   cert := connState.PeerCertificates[0]
   intermediates := x509.NewCertPool()

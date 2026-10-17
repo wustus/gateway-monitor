@@ -63,7 +63,11 @@ func (p *HTTPProbe) probeHTTP(ctx context.Context, target ProbeTarget) (Result, 
   )
   _, err := url.Parse(targetURL)
   if err != nil {
-    return nil, fmt.Errorf("parsing URL: %w", err)
+    return &HTTPProbeResult{
+      ProbeResult: ProbeResult{
+        Error: true,
+      },
+    }, fmt.Errorf("parsing URL: %w", err)
   }
   req, err := http.NewRequestWithContext(ctx, "GET", targetURL, nil)
   if err != nil {
@@ -104,7 +108,11 @@ func (p *HTTPProbe) probeHTTPS(ctx context.Context, target ProbeTarget) (Result,
   )
   u, err := url.Parse(targetURL)
   if err != nil {
-    return nil, fmt.Errorf("parsing URL: %w", err)
+    return &HTTPProbeResult{
+      ProbeResult: ProbeResult{
+        Error: true,
+      },
+    }, fmt.Errorf("parsing URL: %w", err)
   }
   req, err := http.NewRequestWithContext(ctx, "GET", targetURL, nil)
   if err != nil {
@@ -159,5 +167,9 @@ func (p *HTTPProbe) Probe(ctx context.Context, target ProbeTarget) (Result, erro
   } else if strings.ToLower(target.Protocol) == "https" {
     return p.probeHTTPS(ctx, target)
   }
-  return nil, fmt.Errorf("unknown protocol: %s", target.Protocol)
+  return &HTTPProbeResult{
+    ProbeResult: ProbeResult{
+      Error: true,
+    },
+  }, fmt.Errorf("unknown protocol: %s", target.Protocol)
 }

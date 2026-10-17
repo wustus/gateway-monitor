@@ -73,9 +73,7 @@ func (gwm *GatewayMonitor) run(ctx context.Context) error {
     if err != nil {
       slog.Error("tlsProbe", "msg", err)
     }
-    if res != nil {
-      gwm.exporter.Export(target, res)
-    }
+    gwm.exporter.Export(target, res)
   }
   return nil
 }
