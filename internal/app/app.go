@@ -26,7 +26,7 @@ _______   __     __  ____  ___
   │__  │    │__│_  │   │      │
        │          /    │      │
                 gateway-monitor`)
-  fmt.Println(os.Stderr)
+  fmt.Fprintln(os.Stderr)
 }
 
 func Run(ctx context.Context, args []string) error {
