@@ -4,6 +4,7 @@
 package exporter
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,6 +34,7 @@ func NewHTTPExporter() HTTPExporter {
     []string{
       "protocol",
       "hostname",
+      "port",
     },
   )
   httpResponseTimeExporter := prometheus.NewHistogramVec(
@@ -46,6 +48,7 @@ func NewHTTPExporter() HTTPExporter {
     []string{
       "protocol",
       "hostname",
+      "port",
     },
   )
   httpStatusCodeExporter := prometheus.NewGaugeVec(
@@ -58,6 +61,7 @@ func NewHTTPExporter() HTTPExporter {
     []string{
       "protocol",
       "hostname",
+      "port",
     },
   )
   httpNotBeforeExporter := prometheus.NewGaugeVec(
@@ -70,6 +74,7 @@ func NewHTTPExporter() HTTPExporter {
     []string{
       "protocol",
       "hostname",
+      "port",
     },
   )
   httpNotAfterExporter := prometheus.NewGaugeVec(
@@ -82,6 +87,7 @@ func NewHTTPExporter() HTTPExporter {
     []string{
       "protocol",
       "hostname",
+      "port",
     },
   )
   httpTrustExporter := prometheus.NewGaugeVec(
@@ -94,6 +100,7 @@ func NewHTTPExporter() HTTPExporter {
     []string{
       "protocol",
       "hostname",
+      "port",
     },
   )
   httpErrorExporter := prometheus.NewGaugeVec(
@@ -106,6 +113,7 @@ func NewHTTPExporter() HTTPExporter {
     []string{
       "protocol",
       "hostname",
+      "port",
     },
   )
   prometheus.MustRegister(httpUpExporter)
@@ -129,26 +137,27 @@ func NewHTTPExporter() HTTPExporter {
 func (e *HTTPExporter) Export(target probe.ProbeTarget, probeResult probe.HTTPProbeResult) {
   protocol := strings.ToLower(target.Protocol)
   hostname := target.Hostname
+  port := strconv.Itoa(target.Port)
   // we don't make any assumptions about probe result, just export the error and skip everything else
   if probeResult.Error {
-    e.errorExporter.WithLabelValues(protocol, hostname).Set(1.0)
+    e.errorExporter.WithLabelValues(protocol, hostname, port).Set(1.0)
     return
   }
   upValue := 0.0
   if probeResult.IsUp() {
     upValue = 1.0
   }
-  e.upExporter.WithLabelValues(protocol, hostname).Set(upValue)
-  e.responseTimeExporter.WithLabelValues(protocol, hostname).Observe(float64(probeResult.ResponseTime) / float64(time.Millisecond))
-  e.statusCodeExporter.WithLabelValues(protocol, hostname).Set(float64(probeResult.StatusCode))
-  e.errorExporter.WithLabelValues(protocol, hostname).Set(0.0)
+  e.upExporter.WithLabelValues(protocol, hostname, port).Set(upValue)
+  e.responseTimeExporter.WithLabelValues(protocol, hostname, port).Observe(float64(probeResult.ResponseTime) / float64(time.Millisecond))
+  e.statusCodeExporter.WithLabelValues(protocol, hostname, port).Set(float64(probeResult.StatusCode))
+  e.errorExporter.WithLabelValues(protocol, hostname, port).Set(0.0)
   if strings.ToLower(protocol) == "https" {
-    e.notBeforeExporter.WithLabelValues(protocol, hostname).Set(float64(probeResult.NotBefore))
-    e.notAfterExporter.WithLabelValues(protocol, hostname).Set(float64(probeResult.NotAfter))
+    e.notBeforeExporter.WithLabelValues(protocol, hostname, port).Set(float64(probeResult.NotBefore))
+    e.notAfterExporter.WithLabelValues(protocol, hostname, port).Set(float64(probeResult.NotAfter))
     trustValue := 0.0
     if probeResult.Trusted {
       trustValue = 1.0
     }
-    e.trustExporter.WithLabelValues(protocol, hostname).Set(trustValue)
+    e.trustExporter.WithLabelValues(protocol, hostname, port).Set(trustValue)
   }
 }

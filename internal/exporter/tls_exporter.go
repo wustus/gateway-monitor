@@ -4,6 +4,7 @@
 package exporter
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/wustus/gateway-monitor/internal/probe"
@@ -30,6 +31,7 @@ func NewTLSExporter() TLSExporter {
     },
     []string{
       "hostname",
+      "port",
     },
   )
   tlsResponseTimeExporter := prometheus.NewHistogramVec(
@@ -42,6 +44,7 @@ func NewTLSExporter() TLSExporter {
     },
     []string{
       "hostname",
+      "port",
     },
   )
   tlsNotBeforeExporter := prometheus.NewGaugeVec(
@@ -53,6 +56,7 @@ func NewTLSExporter() TLSExporter {
     },
     []string{
       "hostname",
+      "port",
     },
   )
   tlsNotAfterExporter := prometheus.NewGaugeVec(
@@ -64,6 +68,7 @@ func NewTLSExporter() TLSExporter {
     },
     []string{
       "hostname",
+      "port",
     },
   )
   tlsTrustExporter := prometheus.NewGaugeVec(
@@ -75,6 +80,7 @@ func NewTLSExporter() TLSExporter {
     },
     []string{
       "hostname",
+      "port",
     },
   )
   tlsErrorExporter := prometheus.NewGaugeVec(
@@ -86,6 +92,7 @@ func NewTLSExporter() TLSExporter {
     },
     []string{
       "hostname",
+      "port",
     },
   )
   prometheus.MustRegister(tlsUpExporter)
@@ -106,6 +113,7 @@ func NewTLSExporter() TLSExporter {
 
 func (e *TLSExporter) Export(target probe.ProbeTarget, probeResult probe.TLSProbeResult){
   hostname := target.Hostname
+  port := strconv.Itoa(target.Port)
   if probeResult.Error {
     e.errorExporter.WithLabelValues(hostname).Set(1.0)
     return
@@ -114,14 +122,14 @@ func (e *TLSExporter) Export(target probe.ProbeTarget, probeResult probe.TLSProb
   if probeResult.IsUp() {
     upValue = 1.0
   }
-  e.upExporter.WithLabelValues(hostname).Set(upValue)
-  e.responseTimeExporter.WithLabelValues(hostname).Observe(float64(probeResult.ResponseTime) / float64(time.Millisecond))
-  e.notBeforeExporter.WithLabelValues(hostname).Set(float64(probeResult.NotBefore))
-  e.notAfterExporter.WithLabelValues(hostname).Set(float64(probeResult.NotAfter))
+  e.upExporter.WithLabelValues(hostname, port).Set(upValue)
+  e.responseTimeExporter.WithLabelValues(hostname, port).Observe(float64(probeResult.ResponseTime) / float64(time.Millisecond))
+  e.notBeforeExporter.WithLabelValues(hostname, port).Set(float64(probeResult.NotBefore))
+  e.notAfterExporter.WithLabelValues(hostname, port).Set(float64(probeResult.NotAfter))
   trustValue := 0.0
   if probeResult.Trusted {
     trustValue = 1.0
   }
-  e.trustExporter.WithLabelValues(hostname).Set(trustValue)
-  e.errorExporter.WithLabelValues(hostname).Set(0.0)
+  e.trustExporter.WithLabelValues(hostname, port).Set(trustValue)
+  e.errorExporter.WithLabelValues(hostname, port).Set(0.0)
 }
