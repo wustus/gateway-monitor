@@ -115,7 +115,7 @@ func (e *TLSExporter) Export(target probe.ProbeTarget, probeResult probe.TLSProb
   hostname := target.Hostname
   port := strconv.Itoa(target.Port)
   if probeResult.Error {
-    e.errorExporter.WithLabelValues(hostname).Set(1.0)
+    e.errorExporter.WithLabelValues(hostname, port).Set(1.0)
     return
   }
   upValue := 0.0
