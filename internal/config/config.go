@@ -203,7 +203,7 @@ func (c *Config) validate() error {
   if !c.Kubernetes.InCluster && c.Kubernetes.KubeConfigPath == "" {
     return fmt.Errorf("local config but no kube config path was provided")
   }
-  if c.Monitor.ProbeWorkers < 0 {
+  if c.Monitor.ProbeWorkers <= 0 {
     return fmt.Errorf("number of probe workers must be greater than 0, is %d", c.Monitor.ProbeWorkers)
   }
   return nil
