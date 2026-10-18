@@ -57,8 +57,8 @@ func (k *KubeClient) GetHTTPRouteEndpoints(ctx context.Context) ([]RouteEndpoint
         }
       }
       route := routeInfo {
-        group: route.GroupVersionKind().Group,
-        kind: route.GroupVersionKind().Kind,
+        group: "gateway.networking.k8s.io",
+        kind: "HTTPRoute",
         namespace: ns,
         hostnames: routeHostnames,
         parentRef: ref,

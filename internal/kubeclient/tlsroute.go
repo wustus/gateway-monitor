@@ -53,8 +53,8 @@ func (k *KubeClient) GetTLSRouteEndpoints(ctx context.Context) ([]RouteEndpoint,
         }
       }
       route := routeInfo {
-        group: route.GroupVersionKind().Group,
-        kind: route.GroupVersionKind().Kind,
+        group: "gateway.networking.k8s.io",
+        kind: "TLSRoute",
         namespace: ns,
         hostnames: routeHostnames,
         parentRef: ref,
