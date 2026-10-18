@@ -36,29 +36,28 @@ func (r *TLSProbeResult) Duration() time.Duration {
 }
 
 func (p *TLSProbe) Probe(ctx context.Context, target ProbeTarget) (Result, error) {
-  start := time.Now()
-  conn, err := tls.DialWithDialer(
-    &net.Dialer{
+  dialer := &tls.Dialer{
+    NetDialer: &net.Dialer{
       Timeout: p.timeout,
     },
-    "tcp",
-    fmt.Sprintf("%s:%d", target.Hostname, target.Port),
-    &tls.Config{
+    Config: &tls.Config{
       ServerName: target.Hostname,
       // we verify and export trust ourselves
       InsecureSkipVerify: true,
     },
-  )
+  }
+  start := time.Now()
+  conn, err := dialer.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", target.Hostname, target.Port))
+  end := time.Now()
   if err != nil {
     return &TLSProbeResult{
       ProbeResult: ProbeResult{Error: true},
     }, fmt.Errorf("dial host %s:%d: %w", target.Hostname, target.Port, err)
   }
-  conn.Handshake()
-  end := time.Now()
   defer conn.Close()
   responseTime := end.Sub(start)
-  connState := conn.ConnectionState()
+  tlsConn := conn.(*tls.Conn)
+  connState := tlsConn.ConnectionState()
   if len(connState.PeerCertificates) == 0 {
     return &TLSProbeResult{
       ProbeResult: ProbeResult{Error: true},
