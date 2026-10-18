@@ -51,9 +51,7 @@ func (p *TLSProbe) Probe(ctx context.Context, target ProbeTarget) (Result, error
   )
   if err != nil {
     return &TLSProbeResult{
-      ProbeResult: ProbeResult{
-        Error: true,
-      },
+      ProbeResult: ProbeResult{Error: true},
     }, fmt.Errorf("dial host %s:%d: %w", target.Hostname, target.Port, err)
   }
   conn.Handshake()
@@ -63,9 +61,7 @@ func (p *TLSProbe) Probe(ctx context.Context, target ProbeTarget) (Result, error
   connState := conn.ConnectionState()
   if len(connState.PeerCertificates) == 0 {
     return &TLSProbeResult{
-      ProbeResult: ProbeResult{
-        Error: true,
-      },
+      ProbeResult: ProbeResult{Error: true},
     }, fmt.Errorf("no TLS certificate")
   }
   cert := connState.PeerCertificates[0]

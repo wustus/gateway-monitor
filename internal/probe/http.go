@@ -64,17 +64,13 @@ func (p *HTTPProbe) probeHTTP(ctx context.Context, target ProbeTarget) (Result, 
   _, err := url.Parse(targetURL)
   if err != nil {
     return &HTTPProbeResult{
-      ProbeResult: ProbeResult{
-        Error: true,
-      },
+      ProbeResult: ProbeResult{Error: true},
     }, fmt.Errorf("parsing URL: %w", err)
   }
   req, err := http.NewRequestWithContext(ctx, "GET", targetURL, nil)
   if err != nil {
     return &HTTPProbeResult{
-      ProbeResult: ProbeResult{
-        Error: true,
-      },
+      ProbeResult: ProbeResult{Error: true},
     }, fmt.Errorf("create request: %w", err)
   }
   req.Header.Add("User-Agent", "wustus.blog/gateway-monitor/"+version.Version)
@@ -84,9 +80,7 @@ func (p *HTTPProbe) probeHTTP(ctx context.Context, target ProbeTarget) (Result, 
   responseTime := end.Sub(start)
   if err != nil {
     return &HTTPProbeResult{
-      ProbeResult: ProbeResult{
-        Error: true,
-      },
+      ProbeResult: ProbeResult{Error: true},
     }, fmt.Errorf("request target %s: %w", target.Hostname, err)
   }
   defer res.Body.Close()
@@ -109,17 +103,13 @@ func (p *HTTPProbe) probeHTTPS(ctx context.Context, target ProbeTarget) (Result,
   u, err := url.Parse(targetURL)
   if err != nil {
     return &HTTPProbeResult{
-      ProbeResult: ProbeResult{
-        Error: true,
-      },
+      ProbeResult: ProbeResult{Error: true},
     }, fmt.Errorf("parsing URL: %w", err)
   }
   req, err := http.NewRequestWithContext(ctx, "GET", targetURL, nil)
   if err != nil {
     return &HTTPProbeResult{
-      ProbeResult: ProbeResult{
-        Error: true,
-      },
+      ProbeResult: ProbeResult{Error: true},
     }, fmt.Errorf("create request: %w", err)
   }
   req.Header.Add("User-Agent", "wustus.blog/gateway-monitor/"+version.Version)
@@ -129,14 +119,14 @@ func (p *HTTPProbe) probeHTTPS(ctx context.Context, target ProbeTarget) (Result,
   responseTime := end.Sub(start)
   if err != nil {
     return &HTTPProbeResult{
-      ProbeResult: ProbeResult{
-        Error: true,
-      },
+      ProbeResult: ProbeResult{Error: true},
     }, fmt.Errorf("request target %s: %w", target.Hostname, err)
   }
   defer res.Body.Close()
   if res.TLS == nil || len(res.TLS.PeerCertificates) == 0 {
-    return nil, fmt.Errorf("no TLS certificate")
+    return &HTTPProbeResult{
+      ProbeResult: ProbeResult{Error: true},
+    }, fmt.Errorf("no TLS certificate")
   }
   statusCode := res.StatusCode
   cert := res.TLS.PeerCertificates[0]
@@ -168,8 +158,6 @@ func (p *HTTPProbe) Probe(ctx context.Context, target ProbeTarget) (Result, erro
     return p.probeHTTPS(ctx, target)
   }
   return &HTTPProbeResult{
-    ProbeResult: ProbeResult{
-      Error: true,
-    },
+    ProbeResult: ProbeResult{Error: true},
   }, fmt.Errorf("unknown protocol: %s", target.Protocol)
 }
