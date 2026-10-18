@@ -56,7 +56,14 @@ func (k *KubeClient) GetHTTPRouteEndpoints(ctx context.Context) ([]RouteEndpoint
           httpListeners = append(httpListeners, l)
         }
       }
-      routeEndpoints, err := k.getRouteEndpoints(ctx, ns, routeHostnames, ref, httpListeners)
+      route := routeInfo {
+        group: route.GroupVersionKind().Group,
+        kind: route.GroupVersionKind().Kind,
+        namespace: ns,
+        hostnames: routeHostnames,
+        parentRef: ref,
+      }
+      routeEndpoints, err := k.getRouteEndpoints(ctx, route, httpListeners)
       if err != nil {
         return nil, fmt.Errorf("get route endpoints: %w", err)
       }

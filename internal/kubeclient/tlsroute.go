@@ -52,7 +52,14 @@ func (k *KubeClient) GetTLSRouteEndpoints(ctx context.Context) ([]RouteEndpoint,
           tlsListeners = append(tlsListeners, l)
         }
       }
-      routeEndpoints, err := k.getRouteEndpoints(ctx, ns, routeHostnames, ref, tlsListeners)
+      route := routeInfo {
+        group: route.GroupVersionKind().Group,
+        kind: route.GroupVersionKind().Kind,
+        namespace: ns,
+        hostnames: routeHostnames,
+        parentRef: ref,
+      }
+      routeEndpoints, err := k.getRouteEndpoints(ctx, route, tlsListeners)
       if err != nil {
         return nil, fmt.Errorf("get route endpoints: %w", err)
       }
