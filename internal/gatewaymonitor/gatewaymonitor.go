@@ -137,7 +137,7 @@ func (gwm *GatewayMonitor) runTLSProber(ctx context.Context) error {
 }
 
 func (gwm *GatewayMonitor) run(ctx context.Context) error {
-  g, ctx := errgroup.WithContext(ctx)
+  var g errgroup.Group
   g.Go(func() error {
     return gwm.runHTTPProber(ctx)
   })
