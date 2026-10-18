@@ -44,7 +44,7 @@ func (k *KubeClient) GetTLSRouteEndpoints(ctx context.Context) ([]RouteEndpoint,
           "route", route.Name,
           "error", err,
         )
-        return nil, fmt.Errorf("get parentRef: %w", err)
+        continue
       }
       var tlsListeners []gatewayListener
       for _, l := range listeners {

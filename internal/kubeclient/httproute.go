@@ -48,6 +48,7 @@ func (k *KubeClient) GetHTTPRouteEndpoints(ctx context.Context) ([]RouteEndpoint
           "route", route.Name,
           "error", err,
         )
+        continue
       }
       var httpListeners []gatewayListener
       for _, l := range listeners {
