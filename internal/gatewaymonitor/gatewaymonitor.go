@@ -93,7 +93,7 @@ func (gwm *GatewayMonitor) runTLSProber(ctx context.Context) error {
   for _, ep := range tlsEndpoints {
     hostname := ep.Hostname
     if util.IsWildcardDomain(hostname) {
-      ep.Hostname = util.ReplaceWildcardDomain(hostname, "gwm")
+      hostname = util.ReplaceWildcardDomain(hostname, "gwm")
     }
     target := probe.ProbeTarget{Protocol: ep.Protocol, Hostname: hostname, Port: ep.Port}
     liveTargets[target] = struct{}{}
