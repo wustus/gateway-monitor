@@ -149,6 +149,9 @@ func (k *KubeClient) getGateway(ctx context.Context, ns string, ref v1.ParentRef
 
 // Retrieves the Listener entries for the given parentRef.
 func (k *KubeClient) getParentRefListeners(ctx context.Context, ns string, ref v1.ParentReference) ([]gatewayListener, error) {
+  if ref.Group != nil && string(*ref.Group) != "gateway.networking.k8s.io" {
+    return nil, fmt.Errorf("unsupported parentRef group: %s", *ref.Group)
+  }
   kind := v1.Kind("Gateway")
   if ref.Kind != nil {
     kind = *ref.Kind
