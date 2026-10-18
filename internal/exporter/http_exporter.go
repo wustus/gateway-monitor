@@ -170,7 +170,6 @@ func (e *HTTPExporter) RemoveMetric(target probe.ProbeTarget) {
   e.upExporter.DeleteLabelValues(protocol, hostname, port)
   e.responseTimeExporter.DeleteLabelValues(protocol, hostname, port)
   e.statusCodeExporter.DeleteLabelValues(protocol, hostname, port)
-  e.errorExporter.DeleteLabelValues(protocol, hostname, port)
   e.notBeforeExporter.DeleteLabelValues(protocol, hostname, port)
   e.notAfterExporter.DeleteLabelValues(protocol, hostname, port)
   e.trustExporter.DeleteLabelValues(protocol, hostname, port)

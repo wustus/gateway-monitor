@@ -140,7 +140,6 @@ func (e *TLSExporter) RemoveMetric(target probe.ProbeTarget) {
   e.errorExporter.DeleteLabelValues(hostname, port)
   e.upExporter.DeleteLabelValues(hostname, port)
   e.responseTimeExporter.DeleteLabelValues(hostname, port)
-  e.errorExporter.DeleteLabelValues(hostname, port)
   e.notBeforeExporter.DeleteLabelValues(hostname, port)
   e.notAfterExporter.DeleteLabelValues(hostname, port)
   e.trustExporter.DeleteLabelValues(hostname, port)
