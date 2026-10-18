@@ -73,6 +73,10 @@ func (gwm *GatewayMonitor) runHTTPProber(ctx context.Context) error {
       hostname = util.ReplaceWildcardDomain(hostname, "gwm")
     }
     target := probe.ProbeTarget{Protocol: ep.Protocol, Hostname: hostname, Port: ep.Port}
+    // filter out duplicates
+    if _, exists := liveTargets[target]; exists {
+      continue
+    }
     liveTargets[target] = struct{}{}
     g.Go(func() error {
       res, err := httpProbe.Probe(ctx, target)
@@ -108,6 +112,10 @@ func (gwm *GatewayMonitor) runTLSProber(ctx context.Context) error {
       hostname = util.ReplaceWildcardDomain(hostname, "gwm")
     }
     target := probe.ProbeTarget{Protocol: ep.Protocol, Hostname: hostname, Port: ep.Port}
+    // filter out duplicates
+    if _, exists := liveTargets[target]; exists {
+      continue
+    }
     liveTargets[target] = struct{}{}
     g.Go(func() error {
       res, err := tlsProbe.Probe(ctx, target)
