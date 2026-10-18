@@ -58,8 +58,6 @@ securityContext:
 service:
   # Service type
   type: ClusterIP
-  # Service port
-  port: 9100
 
 # -- Expose the service via Ingress
 ingress:
