@@ -32,6 +32,8 @@ type GatewayMonitor struct {
   tlsTargets  map[probe.ProbeTarget]struct{}
 }
 
+type scheduleMonitor struct {}
+
 func New(conf Config, client *kubeclient.KubeClient) *GatewayMonitor {
   return &GatewayMonitor{
     config: conf,
@@ -122,8 +124,17 @@ func (gwm *GatewayMonitor) run(ctx context.Context) error {
   return nil
 }
 
+func (scheduleMonitor) IncrementJob(id uuid.UUID, name string, tags []string, status gocron.JobStatus) {
+  if status == gocron.SingletonRescheduled {
+    slog.Warn("gatewaymonitor", "msg", "scheduled execution skipped because previous job is still running")
+  }
+}
+func (scheduleMonitor) RecordJobTiming(start, end time.Time, id uuid.UUID, name string, tags []string) {}
+
 func (gwm *GatewayMonitor) Run(ctx context.Context) error {
-  s, err := gocron.NewScheduler()
+  s, err := gocron.NewScheduler(
+    gocron.WithMonitor(scheduleMonitor{}),
+  )
   if err != nil {
     return fmt.Errorf("create scheduler: %w", err)
   }
@@ -149,6 +160,7 @@ func (gwm *GatewayMonitor) Run(ctx context.Context) error {
         },
       ),
     ),
+    gocron.WithSingletonMode(gocron.LimitModeReschedule),
   )
   if err != nil {
     return fmt.Errorf("create monitor job: %w", err)
