@@ -28,6 +28,8 @@ type GatewayMonitor struct {
   config    Config
   client    *kubeclient.KubeClient
   exporter  exporter.Exporter
+  httpTargets map[probe.ProbeTarget]struct{}
+  tlsTargets  map[probe.ProbeTarget]struct{}
 }
 
 func New(conf Config, client *kubeclient.KubeClient) *GatewayMonitor {
@@ -35,43 +37,87 @@ func New(conf Config, client *kubeclient.KubeClient) *GatewayMonitor {
     config: conf,
     client: client,
     exporter: exporter.New(),
+    httpTargets: make(map[probe.ProbeTarget]struct{}),
+    tlsTargets: make(map[probe.ProbeTarget]struct{}),
   }
 }
 
-func (gwm *GatewayMonitor) run(ctx context.Context) error {
+func getOfflineTargets(prevTargets, liveTargets map[probe.ProbeTarget]struct{}) []probe.ProbeTarget {
+  removedTargets := []probe.ProbeTarget{}
+  for target := range prevTargets {
+    // target is still live
+    if _, found := liveTargets[target]; found {
+      continue
+    }
+    removedTargets = append(removedTargets, target)
+  }
+  return removedTargets
+}
+
+func (gwm *GatewayMonitor) runHTTPProber(ctx context.Context) error {
   httpEndpoints, err := gwm.client.GetHTTPRouteEndpoints(ctx)
   if err != nil {
     return fmt.Errorf("getting HTTPRoute endpoints: %w", err)
   }
   httpProbe := probe.NewHTTPProbe(gwm.config.Timeout)
+  liveTargets := make(map[probe.ProbeTarget]struct{})
   for _, ep := range httpEndpoints {
     hostname := ep.Hostname
     if util.IsWildcardDomain(hostname) {
       hostname = util.ReplaceWildcardDomain(hostname, "gwm")
     }
     target := probe.ProbeTarget{Protocol: ep.Protocol, Hostname: hostname, Port: ep.Port}
+    liveTargets[target] = struct{}{}
     res, err := httpProbe.Probe(ctx, target)
     if err != nil {
       slog.Error("httpProbe", "msg", err)
     }
     gwm.exporter.Export(target, res)
   }
+  offlineHTTPTargets := getOfflineTargets(gwm.httpTargets, liveTargets)
+  gwm.exporter.RemoveHTTPMetrics(offlineHTTPTargets)
+  if len(gwm.httpTargets) != len(liveTargets){
+    slog.Info("httpProbe", "msg", fmt.Sprintf("tracking %d HTTPRoute targets", len(liveTargets)))
+  }
+  gwm.httpTargets = liveTargets
+  return nil
+}
+
+func (gwm *GatewayMonitor) runTLSProber(ctx context.Context) error {
   tlsEndpoints, err := gwm.client.GetTLSRouteEndpoints(ctx)
   if err != nil {
     return fmt.Errorf("getting TLSRoute endpoints: %w", err)
   }
   tlsProbe := probe.NewTLSProbe(gwm.config.Timeout)
+  liveTargets := make(map[probe.ProbeTarget]struct{})
   for _, ep := range tlsEndpoints {
     hostname := ep.Hostname
     if util.IsWildcardDomain(hostname) {
       ep.Hostname = util.ReplaceWildcardDomain(hostname, "gwm")
     }
     target := probe.ProbeTarget{Protocol: ep.Protocol, Hostname: hostname, Port: ep.Port}
+    liveTargets[target] = struct{}{}
     res, err := tlsProbe.Probe(ctx, target)
     if err != nil {
       slog.Error("tlsProbe", "msg", err)
     }
     gwm.exporter.Export(target, res)
+  }
+  offlineTLSTargets := getOfflineTargets(gwm.tlsTargets, liveTargets)
+  gwm.exporter.RemoveTLSMetrics(offlineTLSTargets)
+  if len(gwm.tlsTargets) != len(liveTargets){
+    slog.Info("tlsProbe", "msg", fmt.Sprintf("tracking %d TLSRoute targets", len(liveTargets)))
+  }
+  gwm.tlsTargets = liveTargets
+  return nil
+}
+
+func (gwm *GatewayMonitor) run(ctx context.Context) error {
+  if err := gwm.runHTTPProber(ctx); err != nil {
+    return err
+  }
+  if err := gwm.runTLSProber(ctx); err != nil {
+    return err
   }
   return nil
 }

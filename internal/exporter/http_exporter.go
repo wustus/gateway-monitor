@@ -161,3 +161,17 @@ func (e *HTTPExporter) Export(target probe.ProbeTarget, probeResult probe.HTTPPr
     e.trustExporter.WithLabelValues(protocol, hostname, port).Set(trustValue)
   }
 }
+
+func (e *HTTPExporter) RemoveMetric(target probe.ProbeTarget) {
+  protocol := strings.ToLower(target.Protocol)
+  hostname := target.Hostname
+  port := strconv.Itoa(target.Port)
+  e.errorExporter.DeleteLabelValues(protocol, hostname, port)
+  e.upExporter.DeleteLabelValues(protocol, hostname, port)
+  e.responseTimeExporter.DeleteLabelValues(protocol, hostname, port)
+  e.statusCodeExporter.DeleteLabelValues(protocol, hostname, port)
+  e.errorExporter.DeleteLabelValues(protocol, hostname, port)
+  e.notBeforeExporter.DeleteLabelValues(protocol, hostname, port)
+  e.notAfterExporter.DeleteLabelValues(protocol, hostname, port)
+  e.trustExporter.DeleteLabelValues(protocol, hostname, port)
+}

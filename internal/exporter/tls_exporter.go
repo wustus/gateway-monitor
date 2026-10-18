@@ -133,3 +133,15 @@ func (e *TLSExporter) Export(target probe.ProbeTarget, probeResult probe.TLSProb
   e.trustExporter.WithLabelValues(hostname, port).Set(trustValue)
   e.errorExporter.WithLabelValues(hostname, port).Set(0.0)
 }
+
+func (e *TLSExporter) RemoveMetric(target probe.ProbeTarget) {
+  hostname := target.Hostname
+  port := strconv.Itoa(target.Port)
+  e.errorExporter.DeleteLabelValues(hostname, port)
+  e.upExporter.DeleteLabelValues(hostname, port)
+  e.responseTimeExporter.DeleteLabelValues(hostname, port)
+  e.errorExporter.DeleteLabelValues(hostname, port)
+  e.notBeforeExporter.DeleteLabelValues(hostname, port)
+  e.notAfterExporter.DeleteLabelValues(hostname, port)
+  e.trustExporter.DeleteLabelValues(hostname, port)
+}
