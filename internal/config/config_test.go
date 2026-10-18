@@ -20,6 +20,7 @@ func setupTest(t *testing.T) {
   t.Setenv("GWM_EXCLUDE_NAMESPACES", "")
   t.Setenv("GWM_SCHEDULE", "")
   t.Setenv("GWM_TIMEOUT", "")
+  t.Setenv("GWM_PROBE_WORKERS", "")
   t.Setenv("GWM_CONFIG_PATH", "")
   kubeConfigPathDefault = ""
   configPath = ""
@@ -49,6 +50,9 @@ func TestConfigDefaultValues(t *testing.T) {
   if conf.Monitor.Timeout != 30 * time.Second {
     t.Error("monitor.timeout is not '30s'")
   }
+  if conf.Monitor.ProbeWorkers != 10 {
+    t.Error("monitor.probeWorkers is not '10'")
+  }
 }
 
 func TestConfigFromEnv(t *testing.T) {
@@ -59,6 +63,7 @@ func TestConfigFromEnv(t *testing.T) {
   os.Setenv("GWM_EXCLUDE_NAMESPACES", "argocd cert-manager")
   os.Setenv("GWM_SCHEDULE", "@every 1s")
   os.Setenv("GWM_TIMEOUT", "1s")
+  os.Setenv("GWM_PROBE_WORKERS", "1")
   conf, err := load(nil)
   if err != nil {
     t.Fatal(err)
@@ -81,6 +86,9 @@ func TestConfigFromEnv(t *testing.T) {
   if conf.Monitor.Timeout != 1 * time.Second {
     t.Error("monitor.timeout is not '1s'")
   }
+  if conf.Monitor.ProbeWorkers != 1 {
+    t.Error("monitor.probeWorkers is not 1")
+  }
 }
 
 
@@ -101,6 +109,7 @@ kubernetes:
 monitor:
   schedule: "@every 1m"
   timeout: "2s"
+  probeWorkers: 2
 `)
   if err := os.WriteFile(configPath, configData, 0o600); err != nil {
     t.Fatal(err)
@@ -128,6 +137,9 @@ monitor:
   if conf.Monitor.Timeout != 2 * time.Second {
     t.Error("monitor.timeout is not '2s'")
   }
+  if conf.Monitor.ProbeWorkers != 2 {
+    t.Error("monitor.probeWorkers is not 2")
+  }
 }
 
 func TestConfigFromArgs(t *testing.T) {
@@ -144,16 +156,24 @@ func TestConfigFromArgs(t *testing.T) {
     "@every 1y",
     "--timeout",
     "3s",
+    "--probeWorkers",
+    "3",
   }
   conf, err := load(args)
   if err != nil {
     t.Fatal(err)
   }
   if !conf.Kubernetes.InCluster {
-    t.Error("client.inCluster is false, expecting true")
+    t.Error("kuberenetes.inCluster is false, expecting true")
   }
   if conf.Kubernetes.KubeConfigPath != "/dev/null" {
-    t.Errorf("client.kubeConfigPath is %s, expecting /dev/null", conf.Kubernetes.KubeConfigPath)
+    t.Errorf("kuberenetes.kubeConfigPath is %s, expecting /dev/null", conf.Kubernetes.KubeConfigPath)
+  }
+  if !slices.Equal(conf.Kubernetes.Namespaces, []string{"all", "bow"}) {
+    t.Error("kubernetes.namespaces is not 'all bow'")
+  }
+  if !slices.Equal(conf.Kubernetes.ExcludeNamespaces, []string{"none", "supersede"}) {
+    t.Error("kubernetes.excludeNamespaces is not 'none supersede'")
   }
   if conf.Monitor.Schedule != "@every 1y" {
     t.Error("monitor.schedule is not '@every 1y'")
@@ -161,11 +181,8 @@ func TestConfigFromArgs(t *testing.T) {
   if conf.Monitor.Timeout != 3 * time.Second {
     t.Error("monitor.timeout is not '3s'")
   }
-  if !slices.Equal(conf.Kubernetes.Namespaces, []string{"all", "bow"}) {
-    t.Error("monitor.namespaces is not 'all bow'")
-  }
-  if !slices.Equal(conf.Kubernetes.ExcludeNamespaces, []string{"none", "supersede"}) {
-    t.Error("monitor.excludeNamespaces is not 'none supersede'")
+  if conf.Monitor.ProbeWorkers != 3 {
+    t.Error("monitor.probeWorkers is not 3")
   }
 }
 
@@ -177,6 +194,7 @@ func TestConfigPrecedence(t *testing.T) {
   os.Setenv("GWM_EXCLUDE_NAMESPACES", "argocd cert-manager")
   os.Setenv("GWM_SCHEDULE", "@every 1s")
   os.Setenv("GWM_TIMEOUT", "1s")
+  os.Setenv("GWM_PROBE_WORKERS", "1")
   dir := os.TempDir()
   configPath := filepath.Join(dir, "gwm.yaml")
   configData := []byte(`
@@ -192,6 +210,7 @@ kubernetes:
 monitor:
   schedule: "@every 1m"
   timeout: "2s"
+  probeWorkers: 2
 `)
   if err := os.WriteFile(configPath, configData, 0o600); err != nil {
     t.Fatal(err)
@@ -220,6 +239,9 @@ monitor:
   if conf.Monitor.Timeout != 2 * time.Second {
     t.Error("monitor.schedule is not '2s'")
   }
+  if conf.Monitor.ProbeWorkers != 2 {
+    t.Error("monitor.probeWorkers is not 2")
+  }
   args := []string{
     "--incluster",
     "--kubeconfig",
@@ -232,6 +254,8 @@ monitor:
     "@every 1y",
     "--timeout",
     "3s",
+    "--probeWorkers",
+    "3",
   }
   // passed args > file config
   conf, err = load(args)
@@ -252,6 +276,9 @@ monitor:
   }
   if conf.Monitor.Timeout != 3 * time.Second {
     t.Error("monitor.timeout is not '3s'")
+  }
+  if conf.Monitor.ProbeWorkers != 3 {
+    t.Error("monitor.probeWorkers is not 3")
   }
 }
 

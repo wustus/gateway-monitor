@@ -13,6 +13,7 @@ import (
 	"github.com/wustus/gateway-monitor/internal/kubeclient"
 	"github.com/wustus/gateway-monitor/internal/probe"
 	"github.com/wustus/gateway-monitor/internal/util"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
@@ -20,14 +21,15 @@ import (
 
 
 type Config struct {
-  Schedule          string        `yaml:"schedule"`
-  Timeout           time.Duration `yaml:"timeout"`
+  Schedule      string        `yaml:"schedule"`
+  Timeout       time.Duration `yaml:"timeout"`
+  ProbeWorkers  int           `yaml:"probeWorkers"`
 }
 
 type GatewayMonitor struct {
-  config    Config
-  client    *kubeclient.KubeClient
-  exporter  exporter.Exporter
+  config      Config
+  client      *kubeclient.KubeClient
+  exporter    exporter.Exporter
   httpTargets map[probe.ProbeTarget]struct{}
   tlsTargets  map[probe.ProbeTarget]struct{}
 }
@@ -57,6 +59,8 @@ func getOfflineTargets(prevTargets, liveTargets map[probe.ProbeTarget]struct{}) 
 }
 
 func (gwm *GatewayMonitor) runHTTPProber(ctx context.Context) error {
+  g, ctx := errgroup.WithContext(ctx)
+  g.SetLimit(gwm.config.ProbeWorkers)
   httpEndpoints, err := gwm.client.GetHTTPRouteEndpoints(ctx)
   if err != nil {
     return fmt.Errorf("getting HTTPRoute endpoints: %w", err)
@@ -70,12 +74,16 @@ func (gwm *GatewayMonitor) runHTTPProber(ctx context.Context) error {
     }
     target := probe.ProbeTarget{Protocol: ep.Protocol, Hostname: hostname, Port: ep.Port}
     liveTargets[target] = struct{}{}
-    res, err := httpProbe.Probe(ctx, target)
-    if err != nil {
-      slog.Error("httpProbe", "msg", err)
-    }
-    gwm.exporter.Export(target, res)
+    g.Go(func() error {
+      res, err := httpProbe.Probe(ctx, target)
+      if err != nil {
+        slog.Error("httpProbe", "msg", err)
+      }
+      gwm.exporter.Export(target, res)
+      return nil
+    })
   }
+  g.Wait()
   offlineHTTPTargets := getOfflineTargets(gwm.httpTargets, liveTargets)
   gwm.exporter.RemoveHTTPMetrics(offlineHTTPTargets)
   if len(gwm.httpTargets) != len(liveTargets){
@@ -86,6 +94,8 @@ func (gwm *GatewayMonitor) runHTTPProber(ctx context.Context) error {
 }
 
 func (gwm *GatewayMonitor) runTLSProber(ctx context.Context) error {
+  g, ctx := errgroup.WithContext(ctx)
+  g.SetLimit(gwm.config.ProbeWorkers)
   tlsEndpoints, err := gwm.client.GetTLSRouteEndpoints(ctx)
   if err != nil {
     return fmt.Errorf("getting TLSRoute endpoints: %w", err)
@@ -99,12 +109,16 @@ func (gwm *GatewayMonitor) runTLSProber(ctx context.Context) error {
     }
     target := probe.ProbeTarget{Protocol: ep.Protocol, Hostname: hostname, Port: ep.Port}
     liveTargets[target] = struct{}{}
-    res, err := tlsProbe.Probe(ctx, target)
-    if err != nil {
-      slog.Error("tlsProbe", "msg", err)
-    }
-    gwm.exporter.Export(target, res)
+    g.Go(func() error {
+      res, err := tlsProbe.Probe(ctx, target)
+      if err != nil {
+        slog.Error("tlsProbe", "msg", err)
+      }
+      gwm.exporter.Export(target, res)
+      return nil
+    })
   }
+  g.Wait()
   offlineTLSTargets := getOfflineTargets(gwm.tlsTargets, liveTargets)
   gwm.exporter.RemoveTLSMetrics(offlineTLSTargets)
   if len(gwm.tlsTargets) != len(liveTargets){
@@ -115,13 +129,14 @@ func (gwm *GatewayMonitor) runTLSProber(ctx context.Context) error {
 }
 
 func (gwm *GatewayMonitor) run(ctx context.Context) error {
-  if err := gwm.runHTTPProber(ctx); err != nil {
-    return err
-  }
-  if err := gwm.runTLSProber(ctx); err != nil {
-    return err
-  }
-  return nil
+  g, ctx := errgroup.WithContext(ctx)
+  g.Go(func() error {
+    return gwm.runHTTPProber(ctx)
+  })
+  g.Go(func() error {
+    return gwm.runTLSProber(ctx)
+  })
+  return g.Wait()
 }
 
 func (scheduleMonitor) IncrementJob(id uuid.UUID, name string, tags []string, status gocron.JobStatus) {

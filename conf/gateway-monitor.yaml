@@ -9,3 +9,4 @@ kubernetes:
 monitor:
   schedule: "@every 1m"
   timeout: "30s"
+  probeWorkers: 10

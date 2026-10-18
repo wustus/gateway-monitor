@@ -31,6 +31,7 @@ var configPath string = "/etc/gateway-monitor.yaml"
 var inClusterDefault bool = false
 var scheduleDefault string = "@every 30s"
 var timeoutDefault time.Duration = 30 * time.Second
+var probeWorkersDefault int = 10
 var namespacesDefault string = ""
 var excludeNamespacesDefault string = ""
 var kubeConfigPathDefault string = ""
@@ -46,6 +47,7 @@ func (c Config) LogValue() slog.Value {
     slog.Group("monitor",
       slog.String("schedule", c.Monitor.Schedule),
       slog.Duration("timeout", c.Monitor.Timeout),
+      slog.Int("probeWorkers", c.Monitor.ProbeWorkers),
     ),
   )
 }
@@ -86,6 +88,16 @@ func (c *Config) getConfigFromEnv() error {
     }
     c.Monitor.Timeout = timeoutDuration
   }
+  if probeWorkersEnv := os.Getenv("GWM_PROBE_WORKERS"); probeWorkersEnv != "" {
+    probeWorkers, err := strconv.Atoi(probeWorkersEnv)
+    if err != nil {
+      return fmt.Errorf("GWM_PROBE_WORKERS must be an integer, got %s: %w",
+        probeWorkersEnv,
+        err,
+      )
+    }
+    c.Monitor.ProbeWorkers = probeWorkers
+  }
   return nil
 }
 
@@ -110,6 +122,7 @@ func (c *Config) parseArgs(args []string) error {
   var kubeConfigPath, schedule, namespaces, excludeNamespaces string
   var inCluster bool
   var timeout time.Duration
+  var probeWorkers int
 
   if kubeConfigPathDefault != "" {
     flags.StringVar(
@@ -156,6 +169,12 @@ func (c *Config) parseArgs(args []string) error {
     timeoutDefault,
     "probe request timeout",
   )
+  flags.IntVar(
+    &probeWorkers,
+    "probeWorkers",
+    probeWorkersDefault,
+    "number of workers per probe",
+  )
   if err := flags.Parse(args); err != nil {
     return fmt.Errorf("parse flags: %w", err)
   }
@@ -173,6 +192,8 @@ func (c *Config) parseArgs(args []string) error {
       c.Monitor.Schedule = schedule
     case "timeout":
       c.Monitor.Timeout = timeout
+    case "probeWorkers":
+      c.Monitor.ProbeWorkers = probeWorkers
     }
   })
   return nil
@@ -181,6 +202,9 @@ func (c *Config) parseArgs(args []string) error {
 func (c *Config) validate() error {
   if !c.Kubernetes.InCluster && c.Kubernetes.KubeConfigPath == "" {
     return fmt.Errorf("local config but no kube config path was provided")
+  }
+  if c.Monitor.ProbeWorkers < 0 {
+    return fmt.Errorf("number of probe workers must be greater than 0, is %d", c.Monitor.ProbeWorkers)
   }
   return nil
 }
@@ -197,6 +221,7 @@ func getDefaultConfig() *Config {
     Monitor: &gatewaymonitor.Config{
       Schedule: scheduleDefault,
       Timeout: timeoutDefault,
+      ProbeWorkers: probeWorkersDefault,
     },
   }
 }
