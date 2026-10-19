@@ -4,10 +4,12 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: {{ include "gateway-monitor.fullname" $ }}-servicemonitor
+  labels:
+    {{- include "gateway-monitor.labels" $ | nindent 4 }}
 spec:
   endpoints:
   - interval: {{ .interval }}
-    targetPort: metrics
+    port: metrics
     path: /metrics
   selector:
     matchLabels:
