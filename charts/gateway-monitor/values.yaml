@@ -59,6 +59,11 @@ service:
   # Service type
   type: ClusterIP
 
+# Prometheus ServiceMonitor CRD
+serviceMonitor:
+  enabled: false
+  interval: 30s
+
 # -- Expose the service via Ingress
 ingress:
   enabled: false
@@ -110,11 +115,11 @@ resources: {}
 livenessProbe:
   httpGet:
     path: /health/live
-    port: http
+    port: metrics
 readinessProbe:
   httpGet:
     path: /health/ready
-    port: http
+    port: metrics
 
 # Additional volumes on the output Deployment definition.
 extraVolumes: []
