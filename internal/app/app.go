@@ -19,7 +19,7 @@ import (
 )
 
 func logo() {
-  padding := strings.Repeat(" ", 13 - len(version.Version))
+  padding := strings.Repeat(" ", max(0, 13 - len(version.Version)))
   // slog writes to stderr by default and this can mix up the logo with startup logs
   fmt.Fprintln(os.Stderr, `
 _______   __     __  ____  ___
@@ -29,7 +29,7 @@ _______   __     __  ____  ___
   │__  │    │__│_  │   │      │
        │          /    │      │
 `,
-    padding, fmt.Sprintf("gateway-monitor/%s", version.Version),
+  padding, fmt.Sprintf("gateway-monitor/%s", version.Version),
   )
   fmt.Fprintln(os.Stderr)
 }
