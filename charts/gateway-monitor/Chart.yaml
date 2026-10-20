@@ -3,8 +3,8 @@ name: gateway-monitor
 description: A Kubernetes monitoring tool that exports Prometheus metrics for Gateway API resources.
 type: application
 
-version: 0.1.2
-appVersion: "0.2.1"
+version: 0.1.3
+appVersion: "0.3.0"
 
 home: https://github.com/wustus/gateway-monitor
 sources:
