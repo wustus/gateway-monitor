@@ -17,6 +17,7 @@ config:
   monitor:
     schedule: "@every 30s"
     timeout: 30s
+    probeWorkers: 10
 
 serviceAccount:
   # Specifies whether a service account should be created.
