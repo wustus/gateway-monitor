@@ -78,8 +78,7 @@ dashboard:
 alerts:
   # If enabled, creates a PrometheusRule resource
   enabled: false
-  labels:
-    release: kube-prometheus-stack
+  labels: {}
   annotations: {}
   rules:
     # How often rules are evaluated
