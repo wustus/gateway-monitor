@@ -5,17 +5,54 @@ To install the Helm Chart with its default values, run:
 ```bash
 helm upgrade --install gateway-monitor \
   oci://ghcr.io/wustus/charts/gateway-monitor \
-  --version 0.2.0 \
+  --version 0.3.0 \
   --namespace gateway-monitor \
   --create-namespace
 
-# create ServiceMonitor
+# create ServiceMonitor, Dashboard and Alerts
 helm upgrade --install gateway-monitor \
   oci://ghcr.io/wustus/charts/gateway-monitor \
-  --version 0.2.0 \
+  --version 0.3.0 \
   --set-string 'serviceMonitor.enabled=true' \
+  --set-string 'dashboard.enabled=true' \
+  --set-string 'alerts.enabled=true' \
   --namespace gateway-monitor \
   --create-namespace
+```
+
+## Grafana
+
+The following configuration automates metric-scraping, dashboard-creation and setting up alerting rules.
+
+### ServiceMonitor
+
+To create the `ServiceMonitor` resource, enable it and optionally configure the interval.
+
+```yaml
+serviceMonitor:
+  enabled: true
+  interval: 15s
+```
+
+### Dashboard
+
+To install the `ConfigMap` containing the Grafana dashboard, set `dashboard.enabled` to `true`. You can then adjust the `clusterLabel` as needed. This helps if you run multiple Kubernetes clusters and use a label other than `cluster` to differentiate them.
+
+```yaml
+dashboard:
+  enabled: true
+  # Label used to differentiate kubernetes clusters
+  clusterLabel: "cluster" # or any other label
+```
+
+### Alerts
+
+To install alerts (a `PrometheusRule` resource), set `alerts.enabled` to `true` and configure or disable alerts.
+
+```yaml
+alerts:
+  enabled: true
+  # enable or disable alerts as you please
 ```
 
 ## Permissions 
@@ -33,12 +70,21 @@ config:
     namespaces: []
     excludeNamespaces: []
   monitor:
-    schedule: "@every 30s"
-    timeout: 30s
+    schedule: "@every 15s"
+    timeout: 5s
     probeWorkers: 10
 ```
 
 ## Changes
+
+### 0.3.0
+
+- updated default monitor config
+  * increased schedule to `@every 15s`
+  * set timeout to `5s`
+- increased `serviceMonitor.interval` to `15s`
+- added dashboard
+- added alerts
 
 ### 0.2.0
 
