@@ -3,8 +3,8 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "jsq6tsn",
-    "generation": 9,
-    "creationTimestamp": "2026-11-07T10:06:32Z",
+    "generation": 3,
+    "creationTimestamp": "2026-11-07T20:20:15Z",
     "labels": {},
     "annotations": {}
   },
@@ -743,7 +743,7 @@
                     },
                     "showPoints": "auto",
                     "showValues": false,
-                    "spanNulls": false,
+                    "spanNulls": 3600000,
                     "stacking": {
                       "group": "A",
                       "mode": "none"
@@ -1958,7 +1958,7 @@
                     },
                     "showPoints": "auto",
                     "showValues": false,
-                    "spanNulls": false,
+                    "spanNulls": 3600000,
                     "stacking": {
                       "group": "A",
                       "mode": "none"
@@ -2233,7 +2233,7 @@
                       "tooltip": false,
                       "viz": false
                     },
-                    "insertNulls": false,
+                    "insertNulls": 3600000,
                     "lineInterpolation": "linear",
                     "lineStyle": {
                       "fill": "solid"
@@ -2861,7 +2861,7 @@
                     },
                     "showPoints": "auto",
                     "showValues": false,
-                    "spanNulls": false,
+                    "spanNulls": 3600000,
                     "stacking": {
                       "group": "A",
                       "mode": "none"
@@ -4075,7 +4075,7 @@
                     },
                     "showPoints": "auto",
                     "showValues": false,
-                    "spanNulls": false,
+                    "spanNulls": 3600000,
                     "stacking": {
                       "group": "A",
                       "mode": "none"
@@ -5319,4 +5319,3 @@
     }
   }
 }
-
