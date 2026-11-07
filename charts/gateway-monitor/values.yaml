@@ -15,8 +15,8 @@ config:
     namespaces: []
     excludeNamespaces: []
   monitor:
-    schedule: "@every 30s"
-    timeout: 30s
+    schedule: "@every 15s"
+    timeout: 5s
     probeWorkers: 10
 
 serviceAccount:
@@ -63,7 +63,67 @@ service:
 # Prometheus ServiceMonitor CRD
 serviceMonitor:
   enabled: false
-  interval: 30s
+  interval: 15s
+
+# Grafana Dashboard ConfigMap
+dashboard:
+  enabled: false
+  # Label used to differentiate kubernetes clusters
+  clusterLabel: "cluster"
+  label: grafana_dashboard
+  labelValue: "1"
+  annotations: {}
+
+# Alert rules for gateway-monitor
+alerts:
+  # If enabled, creates a PrometheusRule resource
+  enabled: false
+  labels:
+    release: kube-prometheus-stack
+  annotations: {}
+  rules:
+    # How often rules are evaluated
+    interval: 30s
+    # Alerts are considered firing once they have been returned for this long.
+    for: 0s
+    # How long an alert will continue firing after the condition that triggered it has cleared.
+    keep_firing_for: 0s
+    endpointDown:
+      enabled: true
+      # alerts.rules.for overwrite
+      for: ~
+      # alerts.rules.keep_firing_for overwrite
+      keep_firing_for: ~
+      labels:
+        severity: critical
+    endpointUnknown:
+      enabled: true
+      # alerts.rules.for overwrite
+      for: ~
+      # alerts.rules.keep_firing_for overwrite
+      keep_firing_for: ~
+      labels:
+        severity: warning
+    certificateExpiring:
+      enabled: true
+      # alerting threshold in seconds
+      alertThreshold: 3600
+      # alerts.rules.for overwrite
+      for: ~
+      # alerts.rules.keep_firing_for overwrite
+      keep_firing_for: ~
+      labels:
+        severity: critical
+    endpointTrusted:
+      enabled: true
+      # alerts.rules.for overwrite
+      for: ~
+      # alerts.rules.keep_firing_for overwrite
+      keep_firing_for: ~
+      labels:
+        severity: info
+
+  extraRules: []
 
 # -- Expose the service via Ingress
 ingress:

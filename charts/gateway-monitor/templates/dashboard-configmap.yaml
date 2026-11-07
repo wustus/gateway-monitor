@@ -1,0 +1,18 @@
+{{- with .Values.dashboard }}
+{{- if .enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "gateway-monitor.fullname" $ }}-dashboard
+  labels:
+    {{- include "gateway-monitor.labels" $ | nindent 4 }}
+    {{ .label }}: {{ .labelValue | quote }}
+  {{- with .annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  gateway-monitor.json: |-
+    {{- tpl ($.Files.Get "dashboards/gateway-monitor.json") $ | nindent 4 }}
+{{- end }}
+{{- end }}

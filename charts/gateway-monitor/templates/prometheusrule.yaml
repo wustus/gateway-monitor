@@ -1,0 +1,69 @@
+{{- if .Values.alerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "gateway-monitor.fullname" $ }}-alerts
+  labels:
+    {{- include "gateway-monitor.labels" $ | nindent 4 }}
+    {{- with .Values.alerts.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.alerts.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  groups:
+    - name: gateway-monitor-alerts
+      interval: {{ .Values.alerts.rules.interval }}
+      rules:
+      {{- with .Values.alerts.rules }}
+      {{- $rules := . -}}
+      {{- if .endpointDown.enabled }}
+      - alert: GWMEndpointDown
+        expr: "gwm_http_endpoint_up == 0 or gwm_tls_endpoint_up == 0"
+        for: {{ .for | default $rules.for }}
+        keep_firing_for: {{ .keep_firing_for | default $rules.keep_firing_for }}
+        labels:
+          severity: {{ .endpointDown.labels.severity }}
+        annotations:
+          summary: "Endpoint {{ `{{ $labels.hostname }}` }} is down."
+          description: "gateway-monitor is not able to reach the endpoint."
+      {{- end }}
+      {{- if .endpointUnknown.enabled }}
+      - alert: GWMEndpointUnknown
+        expr: "gwm_http_endpoint_error == 1 or gwm_tls_endpoint_error == 1"
+        for: {{ .for | default $rules.for }}
+        keep_firing_for: {{ .keep_firing_for | default $rules.keep_firing_for }}
+        labels:
+          severity: {{ .endpointUnknown.labels.severity }}
+        annotations:
+          summary: "Endpoint status {{ `{{ $labels.hostname }}` }} is unknown."
+          description: "gateway-monitor is not able to determine the status of the endpoint."
+      {{- end }}
+      {{- if .certificateExpiring.enabled }}
+      - alert: GWMCertificateExpiring
+        expr: |-
+          (gwm_http_endpoint_not_after - time()) < {{ .certificateExpiring.alertThreshold }}
+          or (gwm_tls_endpoint_not_after - time()) < {{ .certificateExpiring.alertThreshold }}
+        for: {{ .for | default $rules.for }}
+        keep_firing_for: {{ .keep_firing_for | default $rules.keep_firing_for }}
+        labels:
+          severity: {{ .certificateExpiring.labels.severity }}
+        annotations:
+          summary: "Certificate of {{ `{{ $labels.hostname }}` }} is expiring."
+          description: "gateway-monitor received an expiring certificate from the endpoint."
+      {{- end }}
+      {{- if .endpointTrusted.enabled }}
+      - alert: GWMEndpointTrust
+        expr: "gwm_http_endpoint_trust == 0 or gwm_tls_endpoint_trust == 0"
+        for: {{ .for | default $rules.for }}
+        keep_firing_for: {{ .keep_firing_for | default $rules.keep_firing_for }}
+        labels:
+          severity: {{ .endpointTrusted.labels.severity }}
+        annotations:
+          summary: "Certificate of {{ `{{ $labels.hostname }}` }} is not trusted."
+          description: "gateway-monitor does not trust the certificate chain."
+      {{- end }}
+      {{- end }}
+{{- end }}
