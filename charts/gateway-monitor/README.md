@@ -5,14 +5,14 @@ To install the Helm Chart with its default values, run:
 ```bash
 helm upgrade --install gateway-monitor \
   oci://ghcr.io/wustus/charts/gateway-monitor \
-  --version 0.3.1 \
+  --version 0.3.2 \
   --namespace gateway-monitor \
   --create-namespace
 
 # create ServiceMonitor, Dashboard and Alerts
 helm upgrade --install gateway-monitor \
   oci://ghcr.io/wustus/charts/gateway-monitor \
-  --version 0.3.1 \
+  --version 0.3.2 \
   --set-string 'serviceMonitor.enabled=true' \
   --set-string 'dashboard.enabled=true' \
   --set-string 'alerts.enabled=true' \
