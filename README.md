@@ -6,6 +6,9 @@ Currently supported resources:
 - `HTTPRoute`
 - `TLSRoute`
 
+![gateway-monitor dashboard](./assets/gwm-dashboard.webp)
+
+
 ## Quickstart
 
 To install the Helm Chart with its default values, run:
