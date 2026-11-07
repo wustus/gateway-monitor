@@ -16,14 +16,14 @@ To install the Helm Chart with its default values, run:
 ```bash
 helm upgrade --install gateway-monitor \
   oci://ghcr.io/wustus/charts/gateway-monitor \
-  --version 0.2.0 \
+  --version 0.3.0 \
   --namespace gateway-monitor \
   --create-namespace
 
 # adding the prometheus.io/scrape annotation
 helm upgrade --install gateway-monitor \
   oci://ghcr.io/wustus/charts/gateway-monitor \
-  --version 0.2.0 \
+  --version 0.3.0 \
   --set-string 'serviceMonitor.enabled=true' \
   --namespace gateway-monitor \
   --create-namespace
