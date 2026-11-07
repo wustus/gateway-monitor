@@ -5277,10 +5277,10 @@
         "kind": "ConstantVariable",
         "spec": {
           "name": "cluster_label",
-          "query": "cluster",
+          "query": "{{ .Values.dashboard.clusterLabel }}",
           "current": {
-            "text": "cluster",
-            "value": "cluster"
+            "text": "{{ .Values.dashboard.clusterLabel }}",
+            "value": "{{ .Values.dashboard.clusterLabel }}"
           },
           "hide": "hideVariable",
           "skipUrlSync": true,
