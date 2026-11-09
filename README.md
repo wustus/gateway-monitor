@@ -20,11 +20,13 @@ helm upgrade --install gateway-monitor \
   --namespace gateway-monitor \
   --create-namespace
 
-# adding the prometheus.io/scrape annotation
+# create ServiceMonitor, Dashboard and Alerts
 helm upgrade --install gateway-monitor \
   oci://ghcr.io/wustus/charts/gateway-monitor \
   --version 0.3.2 \
   --set-string 'serviceMonitor.enabled=true' \
+  --set-string 'dashboard.enabled=true' \
+  --set-string 'alerts.enabled=true' \
   --namespace gateway-monitor \
   --create-namespace
 ```
